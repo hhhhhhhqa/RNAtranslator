@@ -1,0 +1,95 @@
+################################Tokenizer
+tokenizer: "bpe"
+# protein_tokenizer: "/data6/sobhan/rllm/dataset/tokenizers/p_1000_128.json"
+# rna_tokenizer: "/data6/sobhan/rllm/dataset/tokenizers/r_1000_128.json"
+
+################################Data Configurations
+train_data: "/data6/sobhan/rllm/dataset/rph/train_rp.txt"
+eval_data: "/data6/sobhan/rllm/dataset/rph/eval_rp.txt"
+results_dir: "/data6/sobhan/rllm/results"
+validation_sample_number: 2
+
+
+################################Training Configurations
+lr: 0.00002
+overwrite_output_dir: False
+do_train: True
+do_predict: False
+per_device_train_batch_size: 8
+gradient_accumulation_steps: 16
+weight_decay: 0.01
+adam_beta1: 0.9
+adam_beta2: 0.999
+max_grad_norm: 1.0
+num_train_epochs: 0
+max_steps: 1000000
+lr_scheduler_type: "linear"
+lr_scheduler_kwargs: {}
+warmup_ratio: 0.0
+warmup_steps: 0
+
+
+################################Evaluation Configurations
+do_eval: False
+evaluation_strategy: "steps"
+prediction_loss_only: False
+per_device_eval_batch_size: 2
+eval_accumulation_steps: null
+eval_delay: null
+eval_steps: 200
+load_best_model_at_end: False
+eval_on_start: True
+
+
+################################Logging Configurations
+log_level: "passive"
+log_level_replica: "warning"
+log_on_each_node: True
+logging_dir: null
+logging_strategy: "steps"
+logging_first_step: True
+logging_steps: 200
+logging_nan_inf_filter: False
+
+
+################################Saving Configurations
+save_strategy: "steps"
+save_steps: 200
+save_total_limit: 10
+# save_safetensors: True
+save_on_each_node: False
+save_only_model: False
+
+
+################################Hardware Configurations
+use_cpu: False
+seed: 42
+data_seed: 42
+jit_mode_eval: False
+use_ipex: False
+bf16: False
+fp16: False
+fp16_opt_level: "O1"
+fp16_backend: "auto"
+bf16_full_eval: False
+fp16_full_eval: False
+tf32: null
+local_rank: -1
+ddp_backend: null
+tpu_num_cores: null
+
+################################Dataloader Configurations
+dataloader_drop_last: False
+dataloader_num_workers: 0
+
+
+################################Dataloader Configurations
+past_index: -1
+run_name: null
+disable_tqdm: False
+remove_unused_columns: True
+label_names: null
+
+
+################################MultiGPU Configuration
+fsdp: 'full_shard'

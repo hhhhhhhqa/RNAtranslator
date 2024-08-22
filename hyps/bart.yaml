@@ -1,0 +1,11 @@
+# BART model details
+
+
+model: "bart"    
+seq_size: 2048  
+vocab_size: 1000  
+d_model: 512  # int, optional, defaults to 512
+encoder_layers: 4
+decoder_layers: 4
+max_position_embeddings: 2048
+forced_eos_token_id: 2
