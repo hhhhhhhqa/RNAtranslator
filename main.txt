@@ -1,0 +1,147 @@
+Number of GPUs available: 2
+GPU 0 is: NVIDIA TITAN RTX
+GPU 0 ID: cuda:0
+GPU 1 is: NVIDIA TITAN RTX
+GPU 1 ID: cuda:1
+Detected kernel version 5.4.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+Using device: cuda:0
+cuda:0
+============================================================================================
+Started training at :  2024-08-22 16:38
+============================================================================================
+enable_padding(max_length=X) is deprecated, use enable_padding(length=X) instead
+enable_padding(max_length=X) is deprecated, use enable_padding(length=X) instead
+Number of GPUs available: 2
+GPU 0 is: NVIDIA TITAN RTX
+GPU 0 ID: cuda:0
+GPU 1 is: NVIDIA TITAN RTX
+GPU 1 ID: cuda:1
+Using device: cuda:1
+cuda:1
+============================================================================================
+Started training at :  2024-08-22 16:38
+============================================================================================
+enable_padding(max_length=X) is deprecated, use enable_padding(length=X) instead
+enable_padding(max_length=X) is deprecated, use enable_padding(length=X) instead
+/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/table.py:1392: FutureWarning: promote has been superseded by mode='default'.
+  table = cls._concat_blocks(blocks, axis=0)
+/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/table.py:1392: FutureWarning: promote has been superseded by mode='default'.
+  table = cls._concat_blocks(blocks, axis=0)
+Traceback (most recent call last):
+  File "/data6/sobhan/rllm/main.py", line 145, in <module>
+    main(args ,wandb)
+  File "/data6/sobhan/rllm/main.py", line 105, in main
+    train_dataset, eval_dataset = get_datasets(args, protein_tokenizer=protein_tokenizer, rna_tokenizer=rna_tokenizer)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data6/sobhan/rllm/src/data/__init__.py", line 24, in get_datasets
+    eval_dataset = load_dataset("text", data_files=args.eval_data, split="val", cache_dir="/data6/sobhan/rllm/dataset/rph/cache")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/load.py", line 2621, in load_dataset
+    ds = builder_instance.as_dataset(split=split, verification_mode=verification_mode, in_memory=keep_in_memory)
+     Traceback (most recent call last):
+      File "/data6/sobhan/rllm/main.py", line 145, in <module>
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^main(args ,wandb)^
+^^^^^^^^^^^^^^^^^  File "/data6/sobhan/rllm/main.py", line 105, in main
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^train_dataset, eval_dataset = get_datasets(args, protein_tokenizer=protein_tokenizer, rna_tokenizer=rna_tokenizer)^
+^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/builder.py", line 1266, in as_dataset
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data6/sobhan/rllm/src/data/__init__.py", line 24, in get_datasets
+    eval_dataset = load_dataset("text", data_files=args.eval_data, split="val", cache_dir="/data6/sobhan/rllm/dataset/rph/cache")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^datasets = map_nested(^
+^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^
+^^  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/utils/py_utils.py", line 481, in map_nested
+^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/load.py", line 2621, in load_dataset
+    mapped = function(data_struct)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/builder.py", line 1296, in _build_single_dataset
+    ds = builder_instance.as_dataset(split=split, verification_mode=verification_mode, in_memory=keep_in_memory)
+         ^^^^^^^^^^^^^^^^^^^^^^^^    ^ds = self._as_dataset(^
+^^ ^ ^ ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/builder.py", line 1370, in _as_dataset
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/builder.py", line 1266, in as_dataset
+    dataset_kwargs = ArrowReader(cache_dir, self.info).read(
+               datasets = map_nested( 
+                  ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^
+^^  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/utils/py_utils.py", line 481, in map_nested
+^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 252, in read
+    mapped = function(data_struct)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/builder.py", line 1296, in _build_single_dataset
+    ds = self._as_dataset(
+         ^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/builder.py", line 1370, in _as_dataset
+    files = self.get_file_instructions(name, instructions, split_infos)
+            ^^^^^^^^^^^^^^^^^^^^^^^^    ^dataset_kwargs = ArrowReader(cache_dir, self.info).read(^
+^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^^
+^^  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 225, in get_file_instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 252, in read
+    file_instructions = make_file_instructions(
+               files = self.get_file_instructions(name, instructions, split_infos) 
+                    ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 134, in make_file_instructions
+^^^^^^^^^^^^^^^^^^^^^^^^    ^absolute_instructions = instruction.to_absolute(name2len)^
+^^^^^^^^ ^ ^ ^ ^ 
+    File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 225, in get_file_instructions
+                     file_instructions = make_file_instructions( 
+      ^^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^
+^^  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 663, in to_absolute
+^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 134, in make_file_instructions
+    absolute_instructions = instruction.to_absolute(name2len)
+                    return [_rel_to_abs_instr(rel_instr, name2len) for rel_instr in self._relative_instructions] 
+                ^ ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 663, in to_absolute
+^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 480, in _rel_to_abs_instr
+    return [_rel_to_abs_instr(rel_instr, name2len) for rel_instr in self._relative_instructions]
+            ^^^    ^raise ValueError(f'Unknown split "{split}". Should be one of {list(name2len)}.')^
+^^^^^^^^^^^^^ValueError^: ^Unknown split "val". Should be one of ['train'].^
+^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/datasets/arrow_reader.py", line 480, in _rel_to_abs_instr
+    raise ValueError(f'Unknown split "{split}". Should be one of {list(name2len)}.')
+ValueError: Unknown split "val". Should be one of ['train'].
+[2024-08-22 13:39:35,532] torch.distributed.elastic.multiprocessing.api: [ERROR] failed (exitcode: 1) local_rank: 0 (pid: 49840) of binary: /var/anaconda3/envs/rllm/bin/python3.12
+Traceback (most recent call last):
+  File "/var/anaconda3/envs/rllm/bin/accelerate", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/accelerate/commands/accelerate_cli.py", line 47, in main
+    args.func(args)
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/accelerate/commands/launch.py", line 1010, in launch_command
+    multi_gpu_launcher(args)
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/accelerate/commands/launch.py", line 672, in multi_gpu_launcher
+    distrib_run.run(args)
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/distributed/run.py", line 797, in run
+    elastic_launch(
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 134, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 264, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+main.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2024-08-22_13:39:35
+  host      : neo
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 49841)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2024-08-22_13:39:35
+  host      : neo
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 49840)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
