@@ -4,10 +4,10 @@ tokenizer: "bpe"
 # rna_tokenizer: "/data6/sobhan/rllm/dataset/tokenizers/r_1000_128.json"
 
 ################################Data Configurations
-train_data: "/data6/sobhan/rllm/dataset/rph/train_rp.txt"
-eval_data: "/data6/sobhan/rllm/dataset/rph/eval_rp.txt"
-results_dir: "/data6/sobhan/rllm/results"
-validation_sample_number: 2
+train_data: "/data6/sobhan/RLLM/dataset/rph/train_rp.txt"
+eval_data: "/data6/sobhan/RLLM/dataset/rph/eval_rp.txt"
+results_dir: "/data6/sobhan/RLLM/results"
+validation_sample_number: 5
 
 
 ################################Training Configurations

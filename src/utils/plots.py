@@ -1,18 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 import pandas as pd
 
-params = {
-    'legend.fontsize': 48,
-    'figure.figsize': (54, 32),
-    'axes.labelsize': 60,
-    'axes.titlesize': 60,
-    'xtick.labelsize': 60,
-    'ytick.labelsize': 60,
-    'lines.linewidth': 20,
-    'scatter.marker': 'o',  
-}
+params = {'legend.fontsize': 48,
+        'figure.figsize': (54, 32),
+        'axes.labelsize': 60,
+        'axes.titlesize':60,
+        'xtick.labelsize':60,
+        'ytick.labelsize':60,
+        'lines.linewidth': 10}
+
 plt.rcParams.update(params)
 
 
@@ -217,4 +216,99 @@ def plot_lost_data_bar(length_data_filtered, length_columns, data, title="Lost D
     plt.legend()
     plt.savefig(filename)
     plt.close()
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import matplotlib.ticker as ticker
 
+# Violin Plot
+def plot_violin_compare(data_arrays, labels, ylabel, filename, limit=True):
+    # Create the violin plot
+    plt.figure()
+    sns.violinplot(
+        data=data_arrays,
+        inner='box', 
+        palette=["#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"],
+        width=0.6,  
+        linewidth=1.5,  
+        fliersize=4,  
+        whis=1.5  
+    )
+    # Customize the plot
+    plt.xticks(range(len(data_arrays)), labels)
+    plt.ylabel(ylabel)
+    # if limit:
+    #     plt.ylim(0, 1)
+
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
+# Ridge Plot
+def plot_ridge_compare(data_arrays, labels, xlabel, filename):
+    # Convert input data to a DataFrame
+    data_dict = {label: data for label, data in zip(labels, data_arrays)}
+    data = pd.DataFrame(data_dict)
+
+    # Melt the DataFrame for seaborn compatibility
+    df_melted = data.melt(var_name='Category', value_name='Value')
+
+    # Dynamic plot based on number of categories
+    g = sns.FacetGrid(df_melted, row="Category", hue="Category", aspect=3, height=1.5, 
+                      palette=["#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"],)
+    g.map(sns.kdeplot, "Value", fill=True, alpha=0.6)
+
+    # Customize plot
+    g.set_axis_labels(xlabel, "Density")
+    g.set_titles(size=10)
+    g.set_xlabels(xlabel, fontsize=10)
+    g.set_ylabels("Density", fontsize=10)
+    g.set_xticklabels(fontsize=10)
+    
+    g.set(yticks=[])
+    g.set(xlim=(0, 1))
+    
+    for ax in g.axes.flat:
+        ax.grid(True, which='major', linestyle='--', linewidth=0.6)
+
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    plt.close()
+
+# Density Plot
+def plot_density_compare(data_arrays, labels, xlabel, filename, limit=True):
+    plt.figure()
+    
+    for data, label in zip(data_arrays, labels):
+        sns.kdeplot(data, fill=True, label=label, alpha=0.3)
+
+    plt.xlabel(xlabel, labelpad=20)
+    plt.legend()
+
+    if limit:
+        plt.xlim(0, 1)
+
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
+
+# Box Plot
+def plot_box_compare(data_arrays, labels, ylabel, filename):
+    plt.figure()
+    sns.boxplot(
+        data=data_arrays,
+        palette=["#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"],  # Dynamic color palette based on input size
+        width=0.6,  
+        linewidth=1.5,  
+        fliersize=4,  
+        whis=1.5  
+    )
+    plt.xticks(range(len(data_arrays)), labels)
+    plt.ylabel(ylabel)
+    plt.grid(True, axis='y', linestyle='--', linewidth=0.6, alpha=0.7)
+    
+    plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=False))
+    
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()

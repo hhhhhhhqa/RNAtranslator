@@ -3,6 +3,8 @@ import os
 import torch
 import random
 import numpy as np
+import json
+
 
 # from generate import generate_
 import torch.nn.functional as F
@@ -81,3 +83,58 @@ def postprocess_rna(rna):
     return rna.replace('b', 'A').replace('j', 'C').replace(
                     'u', 'U').replace('z', 'G').replace(' ', '').replace(
                     'B', 'A').replace('J', 'C').replace('U', 'U').replace('Z', 'G')
+
+
+def get_random_rna(length):
+    rna_vocab = {"A":0,
+             "C":1,
+             "G":2,
+             "T":3}
+
+    rev_rna_vocab = {v:k for k,v in rna_vocab.items()}
+
+    mapping = dict(zip([0,1,2,3],"ACGU"))
+    rsample = ''
+    for i in range(length):
+        p = random.random()
+        if p < 0.3:
+            rsample += 'C'
+        elif p < 0.6:
+            rsample += 'G'
+        elif p < 0.8:
+            rsample += 'A'
+        else:
+            rsample += 'U'
+
+    return rsample
+
+
+def shuffle_rna_sequences(rna_sequences):
+    shuffled_sequences = []
+    for rna in rna_sequences:
+        rna_list = list(rna) 
+        random.shuffle(rna_list)
+        shuffled_sequences.append(''.join(rna_list))
+    return shuffled_sequences
+
+def read_rna_from_fasta(fasta_file_path):
+    natural_rnas = []
+    with open(fasta_file_path, "r") as file:
+        sequence = ""
+        for line in file:
+            if line.startswith(">"):  
+                if sequence:
+                    natural_rnas.append(sequence.strip()) 
+                    sequence = ""  
+            else:
+                sequence += line.strip()  
+        if sequence:
+            natural_rnas.append(sequence.strip())
+    return natural_rnas
+
+def read_rna_from_text(text_file_path):
+    rna_sequences = []
+    with open(text_file_path, "r") as file:
+        for line in file:
+            rna_sequences.append(line.strip()) 
+    return rna_sequences

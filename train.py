@@ -46,11 +46,14 @@ class EvalCallback(TrainerCallback):
 
 def train(args:object, wandb, model, train_dataset, eval_dataset, enc_tokenizer, dec_tokenizer)->None:
     training_args = TrainingArguments(
+        
         # report_to="wandb",
         output_dir=args.results_dir + "/checkpoints",
         do_train=args.do_train,
         do_eval=args.do_eval,
         do_predict=args.do_predict,
+        resume_from_checkpoint="/data6/sobhan/rllm/results/train/t5/run3_20240822-152114/checkpoints/checkpoint-141200",
+        ignore_data_skip = True,
         # evaluation_strategy=args.evaluation_strategy,
         prediction_loss_only=args.prediction_loss_only,
         per_device_train_batch_size=args.per_device_train_batch_size,
@@ -122,10 +125,7 @@ def train(args:object, wandb, model, train_dataset, eval_dataset, enc_tokenizer,
         # callbacks=[evalCallback],
     )
 
-    trainer.train()
-    # accelerator.prepare(model)
-    # accelerator.save_model(model,args.results_dir)
-    
-
+    trainer.train(resume_from_checkpoint=True)
+    # trainer.train()
     return model
 
