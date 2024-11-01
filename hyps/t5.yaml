@@ -1,28 +1,11 @@
 # T5 model details
-
-
-model: "t5"    #/
-# n_heads: 4  #Number of Attiontion Heads
-# n_layers: 4  #Number of Layers
-# n_dec_layers: 4  #Number of decoder Layers
-# d_kv: 64  #
-# d_ff: 2048  #
-# emb_size: 512  #
-seq_size: 2048  #Size of Sequences
-# d_model: 512  #
-# inner_size: 512  #Inner feed-forward layers Size
-# dropout: 0.1  #Dropout
-# vocab_size: 25128  #Vocabulary Size
-
-
-
-
+model: "t5" 
 # Vocabulary size of the T5 model.
 vocab_size: 1000  # int, optional, defaults to 32128
 # Size of the encoder layers and the pooler layer.
 d_model: 512  # int, optional, defaults to 512
 # Size of the key, query, value projections per attention head.
-# The inner_dim of the projection layer will be defined as num_heads * d_kv.
+# The inner_dim   of the projection layer will be defined as num_heads * d_kv.
 d_kv: 64  # int, optional, defaults to 64
 # Size of the intermediate feed forward layer in each T5Block.
 d_ff: 1024  # int, optional, defaults to 2048

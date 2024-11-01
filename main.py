@@ -50,8 +50,7 @@ def parse_opt():
 
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    # print("DEVICE RANKKKKK: ", torch.distributed.get_rank())
-        # Get the number of GPUs
+    # Get the number of GPUs
     num_gpus = torch.cuda.device_count()
     print(f"Number of GPUs available: {num_gpus}")
 
@@ -65,10 +64,7 @@ def parse_opt():
     print(f"Using device: {device}")
 
     args.device = str(device)
-
     print(args.device)
-
-
     return args
 
 
@@ -85,36 +81,41 @@ def main(args:object, wandb)->None:
         print("Started generating at : ", start_time)
         print("============================================================================================")
 
+
+    ############################################Results DIR########################################### 
+
     # Handle Training Arguments
     args = set_hyps(args.train_hyp, args)
     args = set_hyps(args.model_hyp, args)
-    # if args.train: args.results_dir = os.path.join(args.results_dir, "train")
-    # else: args.results_dir = os.path.join(args.results_dir, "inference")
-    # args.results_dir = os.path.join(args.results_dir, args.model)
-    # if not os.path.exists(args.results_dir):
-    #     os.makedirs(args.results_dir)    
-    # args.results_dir = os.path.join(args.results_dir, "run"+str(len(os.listdir(args.results_dir)))+"_"+time.strftime("%Y%m%d-%H%M%S"))
-    args.results_dir = "/data6/sobhan/rllm/results/train/t5/run3_20240822-152114"
-    # os.makedirs(args.results_dir)
+    if args.train: args.results_dir = os.path.join(args.results_dir, "train")
+    else: args.results_dir = os.path.join(args.results_dir, "inference")
+    args.results_dir = os.path.join(args.results_dir, args.model)
+    if not os.path.exists(args.results_dir):
+        os.makedirs(args.results_dir)    
+    args.results_dir = os.path.join(args.results_dir, "run"+str(len(os.listdir(args.results_dir)))+"_"+time.strftime("%Y%m%d-%H%M%S"))
+    os.makedirs(args.results_dir)
 
-    # Load the main components
-    # protein_tokenizer = get_tokenizer(tokenizer_name="bpe", vocab_size=1000, seq_size=128, tokenizer_path=args.protein_tokenizer)
-    # rna_tokenizer = get_tokenizer(tokenizer_name="bpe", vocab_size=1000, seq_size=128, tokenizer_path=args.rna_tokenizer)
+    # Resume Training
+    # args.results_dir = "/data6/sobhan/rllm/results/train/t5/run3_20240822-152114"
+    
 
-    from datasets import load_dataset
-    dataset = load_dataset("text", data_files=args.train_data, split="train", cache_dir="/data6/sobhan/rllm/dataset/rph/cache")
-    protein_tokenizer = BpeTokenizer(vocab_size=1000, seq_size=1024)
-    protein_tokenizer.load("/data6/sobhan/RLLM/dataset/tokenizers/bpe_protein_1000_1024.json")
-    # protein_tokenizer.train_tokenizer(train_data=dataset)
-    # protein_tokenizer.save("/data6/sobhan/rllm/dataset/tokenizers/proteins", "bpe_protein_{}_{}".format(1000, 1024))
+    ############################################Load the main components########################################### 
 
-    rna_tokenizer = BpeTokenizer(vocab_size=1000, seq_size=1024)
-    rna_tokenizer.load("/data6/sobhan/RLLM/dataset/tokenizers/bpe_rna_1000_1024.json")
-    # rna_tokenizer.train_tokenizer(train_data=dataset, which=False)
-    # rna_tokenizer.save("/data6/sobhan/rllm/dataset/tokenizers/rnas", "bpe_rna_{}_{}".format(1000, 1024))
+    # Load Tokenizer
+    source_tokenizer = get_tokenizer(tokenizer_name=args.tokenizer, vocab_size=args.vocab_size, seq_size=args.seq_size, tokenizer_path=args.source_tokenizer)
+    rna_tokenizer = get_tokenizer(tokenizer_name=args.tokenizer, vocab_size=args.vocab_size, seq_size=args.seq_size, tokenizer_path=args.rna_tokenizer)
 
-    train_dataset, eval_dataset = get_datasets(args, protein_tokenizer=protein_tokenizer, rna_tokenizer=rna_tokenizer)
+    # Train Tokenizer
+    if args.train_tokenizer:
+        from datasets import load_dataset
+        dataset = load_dataset("text", data_files=args.train_data, split="train", cache_dir="/data6/sobhan/rllm/dataset/rph/cache")
+        source_tokenizer.train_tokenizer(train_data=dataset)
+        source_tokenizer.save("/data6/sobhan/rllm/dataset/tokenizers/proteins", "bpe_protein_{}_{}".format(1000, 1024))
+        rna_tokenizer.train_tokenizer(train_data=dataset, which=False)
+        rna_tokenizer.save("/data6/sobhan/rllm/dataset/tokenizers/rnas", "bpe_rna_{}_{}".format(1000, 1024))
 
+
+    train_dataset, eval_dataset = get_datasets(args, source_tokenizer=source_tokenizer, rna_tokenizer=rna_tokenizer)
     model = get_model(args=args)
 
     args.model_size = sum(p.numel() for p in model.parameters())
@@ -130,13 +131,13 @@ def main(args:object, wandb)->None:
 
     print(args.runmode)
     if args.runmode == "train":
-        train(args=args, wandb=wandb, model=model, train_dataset=train_dataset, eval_dataset=eval_dataset, enc_tokenizer=protein_tokenizer, dec_tokenizer=rna_tokenizer)
+        train(args=args, wandb=wandb, model=model, train_dataset=train_dataset, eval_dataset=eval_dataset)
     elif args.runmode == "evaluate":
             evaluate(args=args, eval_dataset=train_dataset, model=model, dec_tokenizer=rna_tokenizer)
     elif args.runmode == "evaluate_single":
         evaluate_single(args.input_compare_dir, args.result_eval_dir, args.version)
     elif args.runmode == "generate_single":
-        generate_single(args=args, model=model, enc_tokenizer=protein_tokenizer, dec_tokenizer=rna_tokenizer, num_rnas=128, result_dir=args.result_eval_dir)
+        generate_single(args=args, model=model, enc_tokenizer=source_tokenizer, dec_tokenizer=rna_tokenizer, num_rnas=128, result_dir=args.result_eval_dir)
     else:
         generate(args=args, eval_dataset=train_dataset, model=model, dec_tokenizer=rna_tokenizer)
         

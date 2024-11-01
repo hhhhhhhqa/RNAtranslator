@@ -1,7 +1,10 @@
 ################################Tokenizer
 tokenizer: "bpe"
-# protein_tokenizer: "/data6/sobhan/rllm/dataset/tokenizers/p_1000_128.json"
-# rna_tokenizer: "/data6/sobhan/rllm/dataset/tokenizers/r_1000_128.json"
+source_tokenizer: "/data6/sobhan/RLLM/dataset/tokenizers/bpe_protein_1000_1024.json"
+rna_tokenizer: "/data6/sobhan/RLLM/dataset/tokenizers/bpe_rna_1000_1024.json"
+vocab_size: 1000
+seq_size: 1024
+train_tokenizer: False
 
 ################################Data Configurations
 train_data: "/data6/sobhan/RLLM/dataset/rph/train_rp.txt"

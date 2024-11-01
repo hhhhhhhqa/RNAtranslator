@@ -8,43 +8,43 @@ from transformers.trainer_callback import TrainerControl, TrainerState
 from accelerate import Accelerator
 
 
-class EvalCallback(TrainerCallback):
-    def __init__(self, args, eval_dataset, model, enc_tokenizer, dec_tokenizer, wandb):
-        super().__init__()
-        self.args = args
-        self.dec_tokenizer = dec_tokenizer
-        self.enc_tokenizer = enc_tokenizer
-        self.wandb = wandb
-        self.eval_dataset = eval_dataset
-        self.model = model
+# class EvalCallback(TrainerCallback):
+#     def __init__(self, args, eval_dataset, model, enc_tokenizer, dec_tokenizer, wandb):
+#         super().__init__()
+#         self.args = args
+#         self.dec_tokenizer = dec_tokenizer
+#         self.enc_tokenizer = enc_tokenizer
+#         self.wandb = wandb
+#         self.eval_dataset = eval_dataset
+#         self.model = model
 
-    def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        super().on_train_begin(args, state, control, **kwargs)
-            # Check device for each module in the model
-        for name, module in self.model.named_modules():
-            if hasattr(module, 'weight') and module.weight is not None:
-                print(f"Module: {name}, Weight Device: {module.weight.device}")
-            if hasattr(module, 'bias') and module.bias is not None:
-                print(f"Module: {name}, Bias Device: {module.bias.device}")
-        # self.eval(state.global_step)
-        return
+#     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+#         super().on_train_begin(args, state, control, **kwargs)
+#             # Check device for each module in the model
+#         for name, module in self.model.named_modules():
+#             if hasattr(module, 'weight') and module.weight is not None:
+#                 print(f"Module: {name}, Weight Device: {module.weight.device}")
+#             if hasattr(module, 'bias') and module.bias is not None:
+#                 print(f"Module: {name}, Bias Device: {module.bias.device}")
+#         # self.eval(state.global_step)
+#         return
 
-    def on_train_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        super().on_train_end(args, state, control, **kwargs)
-        self.eval(state.global_step)
-        return
+#     def on_train_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+#         super().on_train_end(args, state, control, **kwargs)
+#         self.eval(state.global_step)
+#         return
 
-    def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        super().on_evaluate(args, state, control, **kwargs)
-        self.eval(state.global_step)
-        return
+#     def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+#         super().on_evaluate(args, state, control, **kwargs)
+#         self.eval(state.global_step)
+#         return
 
-    def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        super().on_evaluate(args, state, control, **kwargs)
-        self.eval(state.global_step)
-        return
+#     def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+#         super().on_evaluate(args, state, control, **kwargs)
+#         self.eval(state.global_step)
+#         return
 
-def train(args:object, wandb, model, train_dataset, eval_dataset, enc_tokenizer, dec_tokenizer)->None:
+def train(args:object, wandb, model, train_dataset, eval_dataset)->None:
     training_args = TrainingArguments(
         
         # report_to="wandb",
@@ -52,8 +52,10 @@ def train(args:object, wandb, model, train_dataset, eval_dataset, enc_tokenizer,
         do_train=args.do_train,
         do_eval=args.do_eval,
         do_predict=args.do_predict,
-        resume_from_checkpoint="/data6/sobhan/rllm/results/train/t5/run3_20240822-152114/checkpoints/checkpoint-141200",
-        ignore_data_skip = True,
+  
+        #resume_from_checkpoint="/data6/sobhan/rllm/results/train/t5/run3_20240822-152114/checkpoints/checkpoint-141200", # Resume Training
+        ignore_data_skip = False, # Resume Training
+  
         # evaluation_strategy=args.evaluation_strategy,
         prediction_loss_only=args.prediction_loss_only,
         per_device_train_batch_size=args.per_device_train_batch_size,
@@ -115,8 +117,6 @@ def train(args:object, wandb, model, train_dataset, eval_dataset, enc_tokenizer,
         load_best_model_at_end=args.load_best_model_at_end
     )
 
-    # evalCallback = EvalCallback(args=args, model=model, eval_dataset=eval_dataset, enc_tokenizer=enc_tokenizer, dec_tokenizer=dec_tokenizer, wandb=wandb)
-
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -125,7 +125,9 @@ def train(args:object, wandb, model, train_dataset, eval_dataset, enc_tokenizer,
         # callbacks=[evalCallback],
     )
 
-    trainer.train(resume_from_checkpoint=True)
-    # trainer.train()
+    trainer.train()
+
+    # Resume Training
+    # trainer.train(resume_from_checkpoint=True)
     return model
 
