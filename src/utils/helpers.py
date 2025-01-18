@@ -138,3 +138,56 @@ def read_rna_from_text(text_file_path):
         for line in file:
             rna_sequences.append(line.strip()) 
     return rna_sequences
+
+def read_protein_from_csv(protein_name, file_path):
+    try:
+        data = pd.read_csv(file_path)
+        if 'prot_name' not in data.columns or 'seq' not in data.columns:
+            raise ValueError("The CSV file must contain 'prot_name' and 'seq' columns.")
+        result = data.loc[data['prot_name'] == protein_name, 'seq']
+    
+        if not result.empty:
+            return result.iloc[0]
+        else:
+            return f"Protein '{protein_name}' not found in the file."
+
+    except FileNotFoundError:
+        return f"File not found: {file_path}"
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
+
+
+def write_fasta(filename, rnas, prefix):
+    with open(filename, "w") as fasta_file:
+        for i, rna in enumerate(rnas, start=1):
+            fasta_file.write(f">{prefix} RNA {i}\n{rna}\n")
+
+
+def combine_fasta_files(output_filename, input_filenames):
+    with open(output_filename, "w") as outfile:
+        for input_file in input_filenames:
+            with open(input_file, "r") as infile:
+                outfile.write(infile.read())
+
+def write_rna_to_fasta(fasta_file, title, sequence):
+    fasta_file.write(f">{title}\n{sequence}\n")
+
+
+def fasta_to_dict(fasta_file):
+    rna_groups = {}
+    current_group = None
+
+    with open(fasta_file, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if line.startswith('>'):
+                header = line[1:]
+                prefix = header.split('_')[0]
+                current_group = prefix
+                if current_group not in rna_groups:
+                    rna_groups[current_group] = []
+            else:
+                if current_group is not None:
+                    rna_groups[current_group].append(line)
+
+    return rna_groups

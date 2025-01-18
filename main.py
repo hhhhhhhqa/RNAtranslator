@@ -11,8 +11,8 @@ from src.utils.helpers import set_hyps
 from src.utils.tokenizer import get_tokenizer, BpeTokenizer
 from src.data import get_datasets
 from train import train
-from generate import generate, generate_single
-from eval import evaluate, evaluate_single
+from generate import generate
+from eval import evaluate
 
 
 from datasets import load_dataset
@@ -27,21 +27,21 @@ def parse_opt():
     parser = argparse.ArgumentParser(description='Multilingual RNA Implementation')
 
     # action
-    parser.add_argument('--runmode', default="evaluate_single", choices=["train", "evaluate", "evaluate_single", "generate_single"], type=str, help='Runmode')
+    parser.add_argument('--runmode', default="generate", choices=["train", "evaluate", "generate"], type=str, help='Runmode')
 
 
     # Trainig Configuration
     parser.add_argument('--train-hyp', default="/data6/sobhan/RLLM/hyps/train.yaml", type=str, help='Training Arguments hyperprameters')
     parser.add_argument('--model-hyp', default="/data6/sobhan/RLLM/hyps/t5.yaml", type=str, help='Model hyperprameters')
 
-    parser.add_argument('--version', default=2, type=int, help='version')
-
     # Generation Configurations
     parser.add_argument('--checkpoints', default='/data6/sobhan/rllm/results/train/t5/run3_20240822-152114/checkpoints/checkpoint-349800', type=str, help='Load Model')
 
-
     parser.add_argument('--input-compare-dir', default="/data1/sobhan/deepclip/data/ELAVL1.json", type=str, help='input dir of the compare binding sites')
     parser.add_argument('--result-eval-dir', default="/data6/sobhan/RLLM/results/validation", type=str, help='Output dir of the single evaluate')
+
+    parser.add_argument('--proteins', nargs='+', type=str, help='List of protein sequences')
+    parser.add_argument('--rna_num', default=128, type=int, help='Number of RNAs to generate')
 
     parser.add_argument('--results-dir', default='./results', type=str, metavar='PATH', help='path to cache (default: none)')
 
@@ -87,7 +87,7 @@ def main(args:object, wandb)->None:
     # Handle Training Arguments
     args = set_hyps(args.train_hyp, args)
     args = set_hyps(args.model_hyp, args)
-    if args.train: args.results_dir = os.path.join(args.results_dir, "train")
+    if args.runmode == "train": args.results_dir = os.path.join(args.results_dir, "train")
     else: args.results_dir = os.path.join(args.results_dir, "inference")
     args.results_dir = os.path.join(args.results_dir, args.model)
     if not os.path.exists(args.results_dir):
@@ -115,7 +115,8 @@ def main(args:object, wandb)->None:
         rna_tokenizer.save("/data6/sobhan/rllm/dataset/tokenizers/rnas", "bpe_rna_{}_{}".format(1000, 1024))
 
 
-    train_dataset, eval_dataset = get_datasets(args, source_tokenizer=source_tokenizer, rna_tokenizer=rna_tokenizer)
+    if args.runmode == "train" or args.runmode == "evaluate":
+        train_dataset, eval_dataset = get_datasets(args, source_tokenizer=source_tokenizer, rna_tokenizer=rna_tokenizer)
     model = get_model(args=args)
 
     args.model_size = sum(p.numel() for p in model.parameters())
@@ -133,13 +134,11 @@ def main(args:object, wandb)->None:
     if args.runmode == "train":
         train(args=args, wandb=wandb, model=model, train_dataset=train_dataset, eval_dataset=eval_dataset)
     elif args.runmode == "evaluate":
-            evaluate(args=args, eval_dataset=train_dataset, model=model, dec_tokenizer=rna_tokenizer)
-    elif args.runmode == "evaluate_single":
-        evaluate_single(args.input_compare_dir, args.result_eval_dir, args.version)
-    elif args.runmode == "generate_single":
-        generate_single(args=args, model=model, enc_tokenizer=source_tokenizer, dec_tokenizer=rna_tokenizer, num_rnas=128, result_dir=args.result_eval_dir)
+        evaluate_single(args.input_compare_dir, args.result_eval_dir)
+    elif args.runmode == "generate":
+        generate(args=args, model=model, enc_tokenizer=source_tokenizer, dec_tokenizer=rna_tokenizer, result_dir=args.result_eval_dir)
     else:
-        generate(args=args, eval_dataset=train_dataset, model=model, dec_tokenizer=rna_tokenizer)
+        raise ValueError("Invalid runmode")
         
 
     end_time = datetime.now(pytz.timezone('Turkey')).strftime("%Y-%m-%d %H:%M")
