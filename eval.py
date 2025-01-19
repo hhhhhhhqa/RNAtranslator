@@ -1,5 +1,3 @@
-from src.utils.helpers import generate_text, postprocess_rna, read_rna_from_fasta, get_random_rna
-
 import argparse
 import os
 # import wandb
@@ -8,26 +6,34 @@ import pytz
 import json
 
 import numpy as np
-from sympy import true
 import torch.nn.functional as F
 
-from src.models import get_model
-from src.utils.helpers import set_hyps, top_k_top_p_filtering, generate_text
-from src.utils.tokenizer import get_tokenizer
-from src.data import get_datasets
-from src.utils.tokenizer import BpeTokenizer
-from src.utils.helpers import generate_text, postprocess_rna
-from src.utils.validations import compare_gc_content, compare_mfe_distribution
+from src.utils.helpers import *
+from src.utils.validations import compare_gc_content, compare_mfe_distribution, compare_rna_similarity
 from src.utils.plots import *
-from safetensors.torch import load_file
-import accelerate
 
 import torch
 
 
-def evaluate(eval_dir):
-    rnas = fasta_to_list(eval_dir+"/rnas.fasta")
-    print(rnas)
+def evaluate(eval_dir, protein=None):
+    rnas = fasta_to_dict(eval_dir+"/rnas.fasta")
+    
+    if protein:
+        scores = read_deepclip_output(eval_dir+f"/{protein}.json")
+        # data = [binding_natural_scores, generated_scores, rnagen_scores, natural_scores]
+        labels = list(scores.keys())
+        data = list(scores.values())
+
+        os.makedirs(f"{eval_dir}/deepclip", exist_ok=True)
+        # # print(data)
+        plot_violin_compare(data , labels, "Binding Score", "{}/deepclip/binding_affinities_violin.png".format(eval_dir))
+        plot_box_compare(data , labels, "Binding Score", "{}/deepclip/binding_affinities_box.png".format(eval_dir))
+        plot_ridge_compare(data , labels, "Binding Score", "{}/deepclip/ridge_plot_output.png".format(eval_dir))
+        plot_density_compare(data , labels, "Binding Score", '{}/deepclip/density_plot_output.png'.format(eval_dir))
+
+    compare_gc_content(rnas, eval_dir)
+    compare_mfe_distribution(rnas, eval_dir)
+    compare_rna_similarity(rnas, 3, eval_dir)
     # with open(json_file_path, "r") as file:
     #     data = json.load(file)
 

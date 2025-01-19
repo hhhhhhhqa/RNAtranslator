@@ -8,6 +8,8 @@ import json
 
 # from generate import generate_
 import torch.nn.functional as F
+from scipy.spatial.distance import pdist, squareform
+
 
 def set_hyps(path, args):
     with open(path, errors="ignore") as f:
@@ -191,3 +193,31 @@ def fasta_to_dict(fasta_file):
                     rna_groups[current_group].append(line)
 
     return rna_groups
+
+def calculate_kmer_features(rna_sequences, k):
+    from sklearn.feature_extraction.text import CountVectorizer
+    vectorizer = CountVectorizer(analyzer='char', ngram_range=(k, k), binary=True)
+    return vectorizer.fit_transform(rna_sequences).toarray()
+
+def tanimoto_similarity(matrix):
+    def tanimoto(u, v):
+        intersection = (u & v).sum()
+        union = u.sum() + v.sum() - intersection
+        return intersection / union if union > 0 else 0
+
+    pairwise = pdist(matrix, metric=lambda u, v: tanimoto(u > 0, v > 0))
+    return squareform(1 - pairwise)
+
+def read_deepclip_output(json_path):
+    with open(json_path, 'r') as f:
+        json_file = f.read()
+        data = json.loads(json_file)
+        scores = {}
+
+        for prediction in data.get("predictions", []):
+            group_name = prediction["id"].split("_")[0]
+            if group_name not in scores:
+                scores[group_name] = []
+            scores[group_name].append(prediction["score"])
+    
+    return scores

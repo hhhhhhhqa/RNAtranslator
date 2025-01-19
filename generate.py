@@ -10,7 +10,6 @@ import torch
 from src.utils.helpers import *
 
 def gen_rna_batch(model, prot_ids, dec_tok, num_samps, max_len=70):
-    # Generate RNAs, but ensure final length is within max_len
     inputs = torch.tensor(prot_ids, dtype=torch.long).unsqueeze(0).to(model.device)
 
     valid_rnas = []
@@ -18,17 +17,16 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_samps, max_len=70):
     while len(valid_rnas) < num_samps:
         ratio += 1
         with torch.no_grad():
-            # Generate 10x the required samples to ensure enough valid RNAs
             seqs = model.generate(
                 inputs,
-                max_length=max_len/ratio,  # Allow longer generation to ensure diversity
+                max_length=max_len/ratio,
                 min_length=5,
                 temperature=1.0,
                 do_sample=True,
                 num_beams=1,
                 repetition_penalty=1.5,
                 encoder_repetition_penalty=1.3,
-                num_return_sequences=num_samps  # Generate more sequences
+                num_return_sequences=num_samps
             )
 
         decoded_rnas = [postprocess_rna(dec_tok.decode(seq.cpu().numpy().tolist())) for seq in seqs]
@@ -79,23 +77,23 @@ def generate(args, model, enc_tokenizer, dec_tokenizer, result_dir):
     model = model.from_pretrained(args.checkpoints).to(args.device)
     model.eval()
 
+    ##################################LOAD RNAs##################################
     rna_files = {
         "natural": "/data6/sobhan/RLLM/dataset/rph/natural/natural_rnas.fna",
-        "binding": "/data6/sobhan/dataset/CLIP/CLIP_CLUSTERED_FASTA/RBM5_clustered.fa",
-        "rnagen": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
+        "binding": f"/data6/sobhan/dataset/CLIP/CLIP_CLUSTERED_FASTA/{args.proteins[0].upper()}_clustered.fa",
+        # "rnagen": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
     }
+
     filtered_paths = {
         key: os.path.join(result_dir, f"{key}_rnas.fasta") for key in rna_files
     }
-
-    # Filter RNAs per type
     filtered_rnas = {
         key: filter_rna(path, filtered_paths[key], args.rna_num)
         for key, path in rna_files.items()
     }
-    print("Filtered RNAs:", filtered_rnas)
 
-    # Generate new RNAs
+    ##################################GENERATE RNAs##################################
+
     print("Generating RNAs...")
     gen_rnas = gen_rna_batch(model, prot_ids, dec_tokenizer, args.rna_num)
 
@@ -104,7 +102,7 @@ def generate(args, model, enc_tokenizer, dec_tokenizer, result_dir):
         for idx, rna in enumerate(gen_rnas):
             gen_outfile.write(f">Generated_RNA_{idx}\n{rna}\n")
 
-    # Save all RNAs into one file
+    ##################################SAVE RNAs##################################
     combined_path = os.path.join(result_dir, "rnas.fasta")
     with open(combined_path, "w") as outfile:
         for key, rnas in filtered_rnas.items():

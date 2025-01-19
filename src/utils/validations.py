@@ -1,9 +1,10 @@
 import RNA
 import numpy as np
 import json
+import os
 
 from src.utils.plots import *
-from src.utils.helpers import shuffle_rna_sequences
+from src.utils.helpers import shuffle_rna_sequences, calculate_kmer_features, tanimoto_similarity
 from scipy.stats import mannwhitneyu
 
 def calculate_mfe(sequence):
@@ -92,37 +93,85 @@ def compare_token_distribution(natural_sequences, generated_sequences, tokenizer
         'generated_distribution': generated_distribution
     }
 
-def compare_mfe_distribution(rna_sequences_list, labels, dir, step, save=True) -> None:
-    distributions = []
+# def compare_mfe_distribution(rna_sequences_list, labels, dir) -> None:
+#     distributions = []
 
-    # Calculate MFE for each RNA sequence list
-    for rna_seqs in rna_sequences_list:
+#     # Calculate MFE for each RNA sequence list
+#     for rna_seqs in rna_sequences_list:
+#         distribution = calculate_mfe_many(rna_seqs)
+#         distributions.append(distribution)
+
+#     # Mann-Whitney U Test for each pair
+#     results = {}
+#     for i in range(len(distributions)):
+#         for j in range(i + 1, len(distributions)):
+#             u_stat, p_value = mannwhitneyu(distributions[i], distributions[j], alternative='two-sided')
+#             results[f"List{i+1} vs List{j+1}"] = (u_stat, p_value)
+#     for comparison, (u_stat, p_value) in results.items():
+#         print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
+
+#     # Generate plots using dynamic functions
+#     plot_violin_compare(distributions, labels, "MFE", f"{dir}/mfe_violin.png")
+#     plot_box_compare(distributions, labels, "MFE", f"{dir}/mfe_box.png")
+#     plot_density_compare(distributions, labels, "MFE", f'{dir}/density_plot_mfe_output.png', False)
+
+#     return None
+
+# Generalized GC Content Comparison
+# def compare_gc_content(rna_sequences_list, labels, dir) -> None:
+#     gc_distributions = []
+
+#     # Calculate GC content for each RNA sequence list
+#     for rna_seqs in rna_sequences_list:
+#         gc_content = [calculate_gc_content(seq) for seq in rna_seqs]
+#         gc_distributions.append(gc_content)
+
+#     # Mann-Whitney U Test for each pair
+#     results = {}
+#     for i in range(len(gc_distributions)):
+#         for j in range(i + 1, len(gc_distributions)):
+#             u_stat, p_value = mannwhitneyu(gc_distributions[i], gc_distributions[j], alternative='two-sided')
+#             results[f"List{i+1} vs List{j+1}"] = (u_stat, p_value)
+#     for comparison, (u_stat, p_value) in results.items():
+#         print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
+        
+#     # Generate plots using dynamic functions
+#     plot_violin_compare(gc_distributions, labels, "GC Content", f"{dir}/gc_content_violin.png")
+#     plot_box_compare(gc_distributions, labels, "GC Content", f"{dir}/gc_box.png")
+#     plot_density_compare(gc_distributions, labels, "GC Content", f'{dir}/density_plot_gc_output.png', False)
+
+#     return None
+
+def compare_mfe_distribution(rna_sequences_dict, dir) -> None:
+    distributions = []
+    labels = list(rna_sequences_dict.keys())
+
+    for group_name, rna_seqs in rna_sequences_dict.items():
         distribution = calculate_mfe_many(rna_seqs)
-        # distribution_sorted = np.sort(np.array(distribution))[:500]  # Sort and limit to best 500 values
         distributions.append(distribution)
 
-    # Mann-Whitney U Test for each pair
     results = {}
     for i in range(len(distributions)):
         for j in range(i + 1, len(distributions)):
             u_stat, p_value = mannwhitneyu(distributions[i], distributions[j], alternative='two-sided')
-            results[f"List{i+1} vs List{j+1}"] = (u_stat, p_value)
+            results[f"{labels[i]} vs {labels[j]}"] = (u_stat, p_value)
+
     for comparison, (u_stat, p_value) in results.items():
         print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
 
-    # Generate plots using dynamic functions
-    plot_violin_compare(distributions, labels, "MFE", f"{dir}/mfe_violin_{step}.png")
-    plot_box_compare(distributions, labels, "MFE", f"{dir}/mfe_box_{step}.png")
-    plot_density_compare(distributions, labels, "MFE", f'{dir}/density_plot_mfe_output_{step}.png', False)
+    os.makedirs(f"{dir}/mfe", exist_ok=True)
+
+    plot_violin_compare(distributions, labels, "MFE", f"{dir}/mfe/mfe_violin.png")
+    plot_box_compare(distributions, labels, "MFE", f"{dir}/mfe/mfe_box.png")
+    plot_density_compare(distributions, labels, "MFE", f'{dir}/mfe/density_plot_mfe_output.png', False)
 
     return None
 
-# Generalized GC Content Comparison
-def compare_gc_content(rna_sequences_list, labels, dir, step, save=True) -> None:
+def compare_gc_content(rna_sequences_dict, dir) -> None:
     gc_distributions = []
+    labels = list(rna_sequences_dict.keys())
 
-    # Calculate GC content for each RNA sequence list
-    for rna_seqs in rna_sequences_list:
+    for group_name, rna_seqs in rna_sequences_dict.items():
         gc_content = [calculate_gc_content(seq) for seq in rna_seqs]
         gc_distributions.append(gc_content)
 
@@ -131,60 +180,42 @@ def compare_gc_content(rna_sequences_list, labels, dir, step, save=True) -> None
     for i in range(len(gc_distributions)):
         for j in range(i + 1, len(gc_distributions)):
             u_stat, p_value = mannwhitneyu(gc_distributions[i], gc_distributions[j], alternative='two-sided')
-            results[f"List{i+1} vs List{j+1}"] = (u_stat, p_value)
+            results[f"{labels[i]} vs {labels[j]}"] = (u_stat, p_value)
+
     for comparison, (u_stat, p_value) in results.items():
         print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
-        
+
+    os.makedirs(f"{dir}/gc", exist_ok=True)
     # Generate plots using dynamic functions
-    plot_violin_compare(gc_distributions, labels, "GC Content", f"{dir}/gc_content_violin_{step}.png")
-    plot_box_compare(gc_distributions, labels, "GC Content", f"{dir}/gc_box_{step}.png")
-    plot_density_compare(gc_distributions, labels, "GC Content", f'{dir}/density_plot_gc_output_{step}.png', False)
+    plot_violin_compare(gc_distributions, labels, "GC Content", f"{dir}/gc/gc_content_violin.png")
+    plot_box_compare(gc_distributions, labels, "GC Content", f"{dir}/gc/gc_box.png")
+    plot_density_compare(gc_distributions, labels, "GC Content", f'{dir}/gc/density_plot_gc_output.png', False)
 
     return None
-# def single_validate(json_file_path, dir, step):
-#     with open(json_file_path, "r") as file:
-#         data = json.load(file)
 
-#     binding_natural_scores = []
-#     generated_scores = []
-#     natural_scores = []
-#     random_scores = []
+def compare_rna_similarity(rna_sequences_dict, k, dir) -> None:
+    similarity_distributions = []
+    labels = list(rna_sequences_dict.keys())
 
+    for group_name, rna_seqs in rna_sequences_dict.items():
+        feature_matrix = calculate_kmer_features(rna_seqs, k)
+        similarity_matrix = tanimoto_similarity(feature_matrix)
+        upper_triangle = similarity_matrix[np.triu_indices(len(rna_seqs), k=1)]
+        similarity_distributions.append(upper_triangle)
 
-#     binding_natural_sequences = []
-#     generated_sequences = []
-#     natural_sequences = []
-#     random_sequences = []
+    results = {}
+    for i in range(len(similarity_distributions)):
+        for j in range(i + 1, len(similarity_distributions)):
+            u_stat, p_value = mannwhitneyu(similarity_distributions[i], similarity_distributions[j], alternative='two-sided')
+            results[f"{labels[i]} vs {labels[j]}"] = (u_stat, p_value)
 
-#     for prediction in data['predictions']:
-#         if "Binding" in prediction["id"]:
-#             binding_natural_scores.append(prediction["score"])
-#             binding_natural_sequences.append(prediction["sequence"])
+    for comparison, (u_stat, p_value) in results.items():
+        print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
 
-#         elif "Natural" in prediction["id"]:
-#             natural_scores.append(prediction["score"])
-#             natural_sequences.append(prediction["sequence"])
+    os.makedirs(f"{dir}/similarity", exist_ok=True)
 
-#         elif "Generated" in prediction["id"]:
-#             generated_scores.append(prediction["score"])
-#             generated_sequences.append(prediction["sequence"])
+    plot_violin_compare(similarity_distributions, labels, "Tanimoto Similarity", f"{dir}/similarity/tanimoto_violin.png")
+    plot_box_compare(similarity_distributions, labels, "Tanimoto Similarity", f"{dir}/similarity/tanimoto_box.png")
+    plot_density_compare(similarity_distributions, labels, "Tanimoto Similarity", f"{dir}/similarity/tanimoto_density.png", False)
 
-#         elif "Random" in prediction["id"]:
-#             random_scores.append(prediction["score"])
-#             random_sequences.append(prediction["sequence"])
-
-
-#     best_num=500
-#     binding_natural_scores = np.sort(np.array(binding_natural_scores))[-best_num:]
-#     natural_scores = np.sort(np.array(natural_scores))[-best_num:]
-#     generated_scores = np.sort(np.array(generated_scores))[-best_num:]
-#     random_scores = np.sort(np.array(random_scores))[-best_num:]
-
-#     plot_violin_compare(binding_natural_scores, generated_scores, natural_scores, random_scores, ["Natural Binding RNAs", "Generated RNAs", "Random Natural RNAs", "Random Generated RNAs"], "Binding Score", "{}/binding_affinities_violin{}.png".format(dir, step))
-#     plot_box_compare(binding_natural_scores, generated_scores, natural_scores, random_scores, ["Natural Binding RNAs", "Generated RNAs", "Random Natural RNAs", "Random Generated RNAs"], "Binding Score", "{}/binding_affinities_box{}.png".format(dir, step))
-#     plot_ridge_compare(binding_natural_scores, generated_scores, natural_scores, random_scores, "Binding Score", "{}/ridge_plot_output{}.png".format(dir, step))
-#     plot_density_compare(binding_natural_scores, generated_scores, natural_scores, random_scores, "Binding Score", '{}/density_plot_output{}.png'.format(dir, step))
-
-
-#     compare_gc_content(binding_natural_sequences, generated_sequences, natural_sequences, random_sequences, dir, step)
-#     compare_mfe_distribution(binding_natural_sequences, generated_sequences, natural_sequences, random_sequences, dir, step)
+    return None
