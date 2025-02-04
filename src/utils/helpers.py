@@ -4,6 +4,7 @@ import torch
 import random
 import numpy as np
 import json
+import pandas as pd
 
 
 # from generate import generate_
@@ -86,6 +87,10 @@ def postprocess_rna(rna):
                     'u', 'U').replace('z', 'G').replace(' ', '').replace(
                     'B', 'A').replace('J', 'C').replace('U', 'U').replace('Z', 'G')
 
+def preprocess_rna(rna):
+    return rna.lower().replace(
+                    'a', 'B').replace('c', 'J').replace('u', 'U').replace('g', 'Z')
+
 
 def get_random_rna(length):
     rna_vocab = {"A":0,
@@ -143,10 +148,12 @@ def read_rna_from_text(text_file_path):
 
 def read_protein_from_csv(protein_name, file_path):
     try:
+        # print(protein_name)
         data = pd.read_csv(file_path)
         if 'prot_name' not in data.columns or 'seq' not in data.columns:
             raise ValueError("The CSV file must contain 'prot_name' and 'seq' columns.")
         result = data.loc[data['prot_name'] == protein_name, 'seq']
+        # print(result)
     
         if not result.empty:
             return result.iloc[0]
@@ -221,3 +228,130 @@ def read_deepclip_output(json_path):
             scores[group_name].append(prediction["score"])
     
     return scores
+
+
+import re
+import numpy as np
+import lib_forgi  # imported as "import forgi" if installed as "forgi"
+from lib_forgi import BulgeGraph
+import tempfile
+import subprocess
+
+# Map the forgi single-letter annotation to F, T, I, H, M, S
+# forgi annotation -> Our labels
+# f = 'dangling start'
+# t = 'dangling end'
+# i = 'internal loop'
+# h = 'hairpin loop'
+# m = 'multi loop'
+# s = 'stem'
+
+ENTITY_LOOKUP = {
+    'f': 0,  # dangling start
+    't': 1,  # dangling end
+    'i': 2,  # internal loop
+    'h': 3,  # hairpin loop
+    'm': 4,  # multi loop
+    's': 5   # stem
+}
+LABELS = ['F', 'T', 'I', 'H', 'M', 'S']
+
+def parse_dot_bracket_to_labels(dot_bracket: str):
+    """
+    Given a dot-bracket string, parse it using forgi to label each nucleotide 
+    with one of [F, T, I, H, M, S].
+    
+    Returns:
+        labels: a list of length len(dot_bracket), where each element is 
+                one of ['F', 'T', 'I', 'H', 'M', 'S'].
+    """
+    # Initialize BulgeGraph
+    bg = BulgeGraph()
+    bg.from_dotbracket(dot_bracket, None)
+
+    # We create a 2D array [6, length_of_seq] = 0
+    # For each classification, we set 1 if it belongs to that class
+    num_positions = len(dot_bracket)
+    structure_matrix = np.zeros((6, num_positions), dtype=int)
+
+    # The bg.to_bg_string() will produce lines like:
+    # define f ... ...
+    # define i ... ...
+    # etc.
+    for line in bg.to_bg_string().split('\n'):
+        line = line.strip()
+        # Example line: "define f 1 3" => nucleotides 1..3 are 'dangling start'
+        if line.startswith('define'):
+            parts = line.split()
+            # print("parts", parts)
+            entity = parts[1][0]  # e.g. 'f'
+            entity_index = ENTITY_LOOKUP.get(entity, None)
+            if entity_index is not None:
+                # The remaining parts are start/end indexes
+                # parts might look like ['define', 'f', '2', '5']
+                # these indexes are 1-based in forgi, so we convert to 0-based
+                if len(parts) > 2:
+                    start_idx = int(parts[2]) - 1
+                else:
+                    print(f"Unexpected line format: {line}")
+                    continue  # Skip this line
+                end_idx   = int(parts[3]) - 1
+                for i in range(start_idx, end_idx + 1):
+                    structure_matrix[entity_index, i] = 1
+
+    # Convert the structure matrix to single-label annotation.
+    # If a position belongs to multiple categories, we'll pick the first.
+    labels_per_nucleotide = []
+    for pos in range(num_positions):
+        # Find which row is 1
+        row_indices = np.where(structure_matrix[:, pos] == 1)[0]
+        if len(row_indices) > 0:
+            # Take the first annotation found
+            label_index = row_indices[0]
+            labels_per_nucleotide.append(LABELS[label_index])
+        else:
+            # If no annotation, we can label as something, or default to 'S' or ' '
+            labels_per_nucleotide.append(' ')  # or 'X'
+
+    return labels_per_nucleotide
+
+def get_struct_annotation_viennaRNA(rna_sequence: str, path_to_rnafold: str = "RNAfold") -> list:
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp_fasta:
+        tmp_fasta_name = tmp_fasta.name
+        tmp_fasta.write(f">test_sequence\n{rna_sequence}\n")
+    
+    # 2. Run RNAfold (ViennaRNA). The output typically has lines:
+    #    sequence, then dot-bracket + energy like "....((..))... (-7.4)"
+    command = f"cat {tmp_fasta_name} | {path_to_rnafold}"
+    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    
+    # 3. Parse the output to find dot-bracket structure
+    stdout_str = result.stdout.decode('utf-8').strip().split('\n')
+    # Example lines:
+    # >test_sequence
+    # ACGUGAAGGCUUCGAGGCUU
+    # ....((..))...((..)) (-3.20)
+    dot_bracket = None
+    for line in stdout_str:
+        line = line.strip()
+        # This line usually ends with an energy in parentheses, e.g. "....(...) (-2.30)"
+        # We'll extract the portion before the space
+        match = re.match(r"([\.\(\)]+)\s+\(.*\)", line)
+        if match:
+            dot_bracket = match.group(1)
+            break
+    
+    # 4. If found, label using forgi
+    if dot_bracket is not None:
+        # print(dot_bracket)
+        labels = parse_dot_bracket_to_labels(dot_bracket)
+    else:
+        labels = [" "] * len(rna_sequence)
+    
+    # 5. Clean up
+    try:
+        os.remove(tmp_fasta_name)
+    except:
+        pass
+    
+    return labels

@@ -2,9 +2,9 @@ import RNA
 import numpy as np
 import json
 import os
-
+import tempfile
 from src.utils.plots import *
-from src.utils.helpers import shuffle_rna_sequences, calculate_kmer_features, tanimoto_similarity
+from src.utils.helpers import *
 from scipy.stats import mannwhitneyu
 
 def calculate_mfe(sequence):
@@ -217,5 +217,81 @@ def compare_rna_similarity(rna_sequences_dict, k, dir) -> None:
     plot_violin_compare(similarity_distributions, labels, "Tanimoto Similarity", f"{dir}/similarity/tanimoto_violin.png")
     plot_box_compare(similarity_distributions, labels, "Tanimoto Similarity", f"{dir}/similarity/tanimoto_box.png")
     plot_density_compare(similarity_distributions, labels, "Tanimoto Similarity", f"{dir}/similarity/tanimoto_density.png", False)
+
+    return None
+    
+def compare_structure_distribution(rna_sequences_dict, dir, path_to_rnafold="RNAfold") -> None:
+    structure_distributions = {label: {key: 0 for key in ['F', 'T', 'I', 'H', 'M', 'S']} for label in rna_sequences_dict.keys()}
+    labels = list(rna_sequences_dict.keys())
+
+    for group_name, rna_seqs in rna_sequences_dict.items():
+        for seq in rna_seqs:
+            struct_annotation = get_struct_annotation_viennaRNA(seq, path_to_rnafold)
+            total_length = len(seq)
+            for struct in struct_annotation:
+                if struct in structure_distributions[group_name]:
+                    structure_distributions[group_name][struct] += 1
+        for struct_type in structure_distributions[group_name]:
+            structure_distributions[group_name][struct_type] /= total_length
+
+    # Mann-Whitney U Test for each structure type between groups
+    results = {}
+    structure_types = ['F', 'T', 'I', 'H', 'M', 'S']
+    
+    for struct_type in structure_types:
+        values = [structure_distributions[label][struct_type] for label in labels]
+        for i in range(len(labels)):
+            for j in range(i + 1, len(labels)):
+                u_stat, p_value = mannwhitneyu(
+                    values[i],
+                    values[j],
+                    alternative='two-sided'
+                )
+                results[f"{labels[i]} vs {labels[j]} ({struct_type})"] = (u_stat, p_value)
+
+    for comparison, (u_stat, p_value) in results.items():
+        print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
+
+    os.makedirs(f"{dir}/structure", exist_ok=True)
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    axes = axes.flatten()
+    
+    for idx, struct_type in enumerate(structure_types):
+        proportions = [structure_distributions[label][struct_type] for label in labels]
+        axes[idx].bar(labels, proportions)
+        axes[idx].set_title(f"{struct_type} Structure Proportion")
+        axes[idx].set_xlabel("Groups")
+        axes[idx].set_ylabel("Proportion")
+    
+    plt.tight_layout()
+    plt.savefig(f"{dir}/structure/secondary_structure_bar.png")
+    plt.show()
+
+    return None
+
+def compare_rna_length(rna_sequences_dict, dir) -> None:
+    length_distributions = []
+    labels = list(rna_sequences_dict.keys())
+
+    for group_name, rna_seqs in rna_sequences_dict.items():
+        lengths = [len(seq) for seq in rna_seqs]
+        length_distributions.append(lengths)
+
+    results = {}
+    for i in range(len(length_distributions)):
+        for j in range(i + 1, len(length_distributions)):
+            u_stat, p_value = mannwhitneyu(length_distributions[i], length_distributions[j], alternative='two-sided')
+            results[f"{labels[i]} vs {labels[j]}"] = (u_stat, p_value)
+
+    for comparison, (u_stat, p_value) in results.items():
+        print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
+
+    os.makedirs(f"{dir}/length", exist_ok=True)
+
+    # Plot comparisons
+    plot_violin_compare(length_distributions, labels, "RNA Sequence Length", f"{dir}/length/length_violin.png")
+    plot_box_compare(length_distributions, labels, "RNA Sequence Length", f"{dir}/length/length_box.png")
+    plot_density_compare(length_distributions, labels, "RNA Sequence Length", f"{dir}/length/length_density.png", False)
 
     return None

@@ -120,7 +120,7 @@ def main(args:object, wandb)->None:
 
     args.model_size = sum(p.numel() for p in model.parameters())
     print("Model Size: ", sum(p.numel() for p in model.parameters()))
-    print(model)
+    # print(model)
 
     # Saving the configs
     args_dict = vars(args)
