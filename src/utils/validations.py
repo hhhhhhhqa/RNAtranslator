@@ -254,7 +254,7 @@ def compare_structure_distribution(rna_sequences_dict, dir, path_to_rnafold="RNA
 
     os.makedirs(f"{dir}/structure", exist_ok=True)
 
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    fig, axes = plt.subplots(2, 3)
     axes = axes.flatten()
     
     for idx, struct_type in enumerate(structure_types):

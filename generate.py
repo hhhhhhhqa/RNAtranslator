@@ -10,50 +10,57 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_tok
     inputs = torch.tensor(prot_ids, dtype=torch.long).unsqueeze(0).to(model.device)
     
     candidate_rnas = []
+    if strategy == 'beam_search':
+        num_candidates = num_beams
+
+    gen_args = {
+        'max_length': 12,
+        'min_length': 5,
+        'repetition_penalty': 1.5,
+        'encoder_repetition_penalty': 1.3,
+        'num_return_sequences': 128,
+    }
+    if strategy == 'beam_search':
+        # For beam search, ensure that num_return_sequences <= num_beams.
+        gen_args.update({
+            'do_sample': False,
+            'num_beams': num_beams,
+            'num_return_sequences': num_candidates,
+        })
+    elif strategy == 'top_k':
+        gen_args.update({
+            'do_sample': True,
+            'temperature': temperature,
+            'top_k': top_k if top_k is not None else 50,
+            'num_beams': num_beams,
+        })
+    elif strategy == 'top_p':
+        gen_args.update({
+            'do_sample': True,
+            'temperature': temperature,
+            'top_p': top_p if top_p is not None else 0.92,
+            'num_beams': num_beams,
+        })
+    else:  # Simple sampling
+        gen_args.update({
+            'do_sample': True,
+            'temperature': temperature,
+            'num_beams': num_beams,
+        })
+
     while len(candidate_rnas) < num_candidates:
-        # print("GEnerating: ", len(candidate_rnas))
+        # print("GEnerating: ", len(candidate_rnas), "/nNum Candidates: ", num_candidates)
         with torch.no_grad():
-            gen_args = {
-                'max_length': 15,
-                'repetition_penalty': 1.5,
-                'encoder_repetition_penalty': 1.3,
-                'num_return_sequences': num_candidates,
-            }
-            if strategy == 'beam_search':
-                # For beam search, ensure that num_return_sequences <= num_beams.
-                effective_beams = max(num_beams, num_candidates)
-                gen_args.update({
-                    'do_sample': False,
-                    'num_beams': effective_beams,
-                    'num_return_sequences': effective_beams,
-                })
-            elif strategy == 'top_k':
-                gen_args.update({
-                    'do_sample': True,
-                    'temperature': temperature,
-                    'top_k': top_k if top_k is not None else 50,
-                    'num_beams': num_beams,
-                })
-            elif strategy == 'top_p':
-                gen_args.update({
-                    'do_sample': True,
-                    'temperature': temperature,
-                    'top_p': top_p if top_p is not None else 0.92,
-                    'num_beams': num_beams,
-                })
-            else:  # Simple sampling
-                gen_args.update({
-                    'do_sample': True,
-                    'temperature': temperature,
-                    'num_beams': num_beams,
-                })
-                
             seqs = model.generate(inputs, **gen_args)
             
         decoded_rnas = [
             postprocess_rna(dec_tok.decode(seq.cpu().numpy().tolist()))
             for seq in seqs
         ]
+        if strategy == 'beam_search':
+            candidate_rnas.extend(decoded_rnas)
+            break
+        
         new_candidates = [
             rna for rna in decoded_rnas
             if (max_token - tolerance) <= len(rna) <= (max_token + tolerance)
@@ -64,7 +71,7 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_tok
 
 
 
-def fasta_to_fasta(input_path, output_path, max_rnas, min_len=10, max_len=MAX_LEN):
+def fasta_to_fasta(input_path, output_path, max_rnas, min_len=10, max_len=MAX_LEN+5):
     rnas = []
 
     with open(input_path, "r") as infile, open(output_path, "w") as outfile:
@@ -102,8 +109,10 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
     grid_config = {
         'beam_search': [
             {'num_beams': 1},
-            {'num_beams': 5},
-            {'num_beams': 25}
+            {'num_beams': 25},
+            {'num_beams': 50},
+            {'num_beams': 100},
+            {'num_beams': 200},
         ],
         'top_k': [
             {'top_k': 30, 'temperature': 0.7, 'num_beams': 1},
@@ -176,35 +185,23 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
         print(f"Pool file saved: {pool_filename}")
         return pool_filename
 
-def aggregate(result_dir):
-    ##################################LOAD RNAs##################################
+def aggregate(args):
     rna_files = {
-        "natural": "/data6/sobhan/RLLM/dataset/rph/natural/natural_rnas.fna",
+        "natural": "/data6/sobhan/dataset/DeepCLIP/RBM5_for.fa",
         "binding": f"/data6/helya/dataset/CLIPdb_cluster/cd_hit_results_RBPs/identity_100/{args.proteins[0].upper()}_rnas_cdhit_100.fa",
         # "rnagen": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
+        "generated": f"{args.eval_dir}/{args.proteins[0]}_filtered.fasta"
     }
 
     filtered_paths = {
-        key: os.path.join(result_dir, f"{key}_rnas.fasta") for key in rna_files
+        key: os.path.join(args.eval_dir, f"{key}_rnas.fasta") for key in rna_files
     }
     filtered_rnas = {
         key: fasta_to_fasta(path, filtered_paths[key], args.rna_num)
         for key, path in rna_files.items()
     }
 
-    ##################################GENERATE RNAs##################################
-
-    # print("Generating RNAs...")
-    # # gen_rnas = gen_rna_batch(model, prot_ids, dec_tokenizer, args.rna_num)
-    # gen_rnas = gen_rna_self_consistency(model, prot_ids, dec_tokenizer, args.rna_num)
-
-    # generated_path = os.path.join(result_dir, "generated_rnas.fasta")
-    # with open(generated_path, "w") as gen_outfile:
-    #     for idx, rna in enumerate(gen_rnas):
-    #         gen_outfile.write(f">Generated_RNA_{idx}\n{rna}\n")
-
-    ##################################SAVE RNAs##################################
-    combined_path = os.path.join(result_dir, "rnas.fasta")
+    combined_path = os.path.join(args.eval_dir, "rnas.fasta")
     with open(combined_path, "w") as outfile:
         for key, rnas in filtered_rnas.items():
             for idx, rna in enumerate(rnas):
@@ -305,7 +302,7 @@ def parse_opt():
     parser.add_argument('--eval-dir', default="/data6/sobhan/RLLM/results/validation/pool", type=str, help='Output dir of the evaluation')
     parser.add_argument('--proteins', nargs='+', default=['hnrpnc', 'ago2', 'elavl1', 'rbm5'], type=str, help='List of protein names or IDs')
     parser.add_argument('--rna_num', default=128, type=int, help='Number of RNAs to generate per setting')
-    parser.add_argument('--top_num', default=10, type=int, help='Number of TOP n RNAs to be selected from the Pool of RNAs')
+    parser.add_argument('--top_num', default=128, type=int, help='Number of TOP n RNAs to be selected from the Pool of RNAs')
 
 
     args = parser.parse_args()    
@@ -402,7 +399,7 @@ if __name__ == "__main__":
                     if cand["rna"] not in seen:
                         unique_candidates.append(cand)
                         seen.add(cand["rna"])
-                    if len(unique_candidates) >= args.top_num:
+                    if len(unique_candidates) >= args.top_num + 50:
                         break
 
                 filtered_filename = os.path.join(os.path.dirname(pool_file), f"{protein_name}_filtered.fasta")
@@ -415,3 +412,4 @@ if __name__ == "__main__":
                 print(f"Pool file for {protein_name} not found.")
 
     if args.runmode == "aggregate":
+        aggregate(args)

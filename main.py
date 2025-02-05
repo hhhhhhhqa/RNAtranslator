@@ -11,7 +11,6 @@ from src.utils.helpers import set_hyps
 from src.utils.tokenizer import get_tokenizer, BpeTokenizer
 from src.data import get_datasets
 from train import train
-from generate import generate
 from eval import evaluate
 
 
@@ -27,7 +26,7 @@ def parse_opt():
     parser = argparse.ArgumentParser(description='Multilingual RNA Implementation')
 
     # action
-    parser.add_argument('--runmode', default="generate", choices=["train", "evaluate", "generate"], type=str, help='Runmode')
+    parser.add_argument('--runmode', default="generate", choices=["train", "evaluate"], type=str, help='Runmode')
 
 
     # Trainig Configuration
@@ -134,8 +133,6 @@ def main(args:object, wandb)->None:
         train(args=args, wandb=wandb, model=model, train_dataset=train_dataset, eval_dataset=eval_dataset)
     elif args.runmode == "evaluate":
         evaluate(args.eval_dir, protein=args.proteins[0])
-    elif args.runmode == "generate":
-        generate(args=args, model=model, enc_tokenizer=source_tokenizer, dec_tokenizer=rna_tokenizer, result_dir=args.eval_dir)
     else:
         raise ValueError("Invalid runmode")
         
