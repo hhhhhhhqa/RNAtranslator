@@ -247,7 +247,7 @@ def compare_rna_similarity(rna_sequences_dict, k, dir) -> None:
 
     return None
     
-def compare_structure_distribution(rna_sequences_dict, dir, path_to_rnafold="RNAfold") -> None:
+"""def compare_structure_distribution(rna_sequences_dict, dir, path_to_rnafold="RNAfold") -> None:
     structure_distributions = {label: {key: 0 for key in ['F', 'T', 'I', 'H', 'M', 'S']} for label in rna_sequences_dict.keys()}
     labels = list(rna_sequences_dict.keys())
 
@@ -295,7 +295,7 @@ def compare_structure_distribution(rna_sequences_dict, dir, path_to_rnafold="RNA
     plt.savefig(f"{dir}/structure/secondary_structure_bar.png")
     plt.show()
 
-    return None
+    return None"""
 
 def compare_rna_length(rna_sequences_dict, dir) -> None:
     length_distributions = []
