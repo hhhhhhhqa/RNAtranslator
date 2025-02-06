@@ -251,67 +251,78 @@ ENTITY_LOOKUP = {
     't': 1,  # dangling end
     'i': 2,  # internal loop
     'h': 3,  # hairpin loop
-    'm': 4,  # multi loop
-    's': 5   # stem
+    'm': 4,  # multi-loop
+    's': 5,  # stem
+    'b': 6   # bulge
 }
-LABELS = ['F', 'T', 'I', 'H', 'M', 'S']
+LABELS = ['F', 'T', 'I', 'H', 'M', 'S', 'B']
+
+def detect_bulges(dot_bracket):
+    """
+    Detect bulge positions in a dot-bracket sequence.
+    Bulges are defined as unpaired bases between paired bases.
+    """
+    bulge_positions = set()
+    stack = []  
+    
+    for i, char in enumerate(dot_bracket):
+        if char == '(':
+            stack.append(i)
+        elif char == ')':
+            if stack:
+                stack.pop()
+        elif char == '.':
+            
+            if i > 0 and i < len(dot_bracket) - 1:
+                if dot_bracket[i - 1] == '(' and dot_bracket[i + 1] == ')':
+                    bulge_positions.add(i)
+    
+    return bulge_positions
 
 def parse_dot_bracket_to_labels(dot_bracket: str):
     """
-    Given a dot-bracket string, parse it using forgi to label each nucleotide 
-    with one of [F, T, I, H, M, S].
+    Parse a dot-bracket string using Forgi to label each nucleotide with 
+    relevant RNA-protein binding structures: [F, T, I, H, M, S, B].
     
     Returns:
         labels: a list of length len(dot_bracket), where each element is 
-                one of ['F', 'T', 'I', 'H', 'M', 'S'].
+                one of ['F', 'T', 'I', 'H', 'M', 'S', 'B'].
     """
-    # Initialize BulgeGraph
+  
     bg = BulgeGraph()
     bg.from_dotbracket(dot_bracket, None)
 
-    # We create a 2D array [6, length_of_seq] = 0
-    # For each classification, we set 1 if it belongs to that class
+    
     num_positions = len(dot_bracket)
-    structure_matrix = np.zeros((6, num_positions), dtype=int)
+    structure_matrix = np.zeros((7, num_positions), dtype=int)
 
-    # The bg.to_bg_string() will produce lines like:
-    # define f ... ...
-    # define i ... ...
-    # etc.
+  
     for line in bg.to_bg_string().split('\n'):
         line = line.strip()
-        # Example line: "define f 1 3" => nucleotides 1..3 are 'dangling start'
         if line.startswith('define'):
             parts = line.split()
-            # print("parts", parts)
-            entity = parts[1][0]  # e.g. 'f'
+            entity = parts[1][0]  
             entity_index = ENTITY_LOOKUP.get(entity, None)
-            if entity_index is not None:
-                # The remaining parts are start/end indexes
-                # parts might look like ['define', 'f', '2', '5']
-                # these indexes are 1-based in forgi, so we convert to 0-based
-                if len(parts) > 2:
-                    start_idx = int(parts[2]) - 1
-                else:
-                    print(f"Unexpected line format: {line}")
-                    continue  # Skip this line
-                end_idx   = int(parts[3]) - 1
+            if entity_index is not None and len(parts) > 2:
+                start_idx = int(parts[2]) - 1
+                end_idx = int(parts[3]) - 1
                 for i in range(start_idx, end_idx + 1):
                     structure_matrix[entity_index, i] = 1
 
-    # Convert the structure matrix to single-label annotation.
-    # If a position belongs to multiple categories, we'll pick the first.
+    
+    bulge_positions = detect_bulges(dot_bracket)
+    for i in bulge_positions:
+        structure_matrix[ENTITY_LOOKUP['b'], i] = 1
+
+
     labels_per_nucleotide = []
     for pos in range(num_positions):
-        # Find which row is 1
         row_indices = np.where(structure_matrix[:, pos] == 1)[0]
         if len(row_indices) > 0:
-            # Take the first annotation found
-            label_index = row_indices[0]
+            label_index = row_indices[0]  
             labels_per_nucleotide.append(LABELS[label_index])
         else:
-            # If no annotation, we can label as something, or default to 'S' or ' '
-            labels_per_nucleotide.append(' ')  # or 'X'
+            labels_per_nucleotide.append(' ')  
 
     return labels_per_nucleotide
 

@@ -1,0 +1,229 @@
+Detected kernel version 5.4.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+enable_padding(max_length=X) is deprecated, use enable_padding(length=X) instead
+enable_padding(max_length=X) is deprecated, use enable_padding(length=X) instead
+Number of GPUs available: 1
+GPU 0 is: NVIDIA GeForce RTX 2080 Ti
+GPU 0 ID: cuda:0
+Using device: cuda
+cuda
+============================================================================================
+Started training at :  2024-11-05 15:02
+============================================================================================
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 7851 examples [00:00, 85788.71 examples/s]
+Filter:   0%|          | 0/7851 [00:00<?, ? examples/s]Filter:  13%|█▎        | 1000/7851 [00:00<00:02, 2406.02 examples/s]Filter:  25%|██▌       | 2000/7851 [00:00<00:02, 2319.00 examples/s]Filter:  38%|███▊      | 3000/7851 [00:01<00:01, 2531.98 examples/s]Filter:  51%|█████     | 4000/7851 [00:01<00:01, 2299.74 examples/s]Filter:  64%|██████▎   | 5000/7851 [00:02<00:01, 2407.46 examples/s]Filter:  76%|███████▋  | 6000/7851 [00:02<00:00, 2451.53 examples/s]Filter:  89%|████████▉ | 7000/7851 [00:02<00:00, 2561.10 examples/s]Filter: 100%|██████████| 7851/7851 [00:03<00:00, 2414.58 examples/s]Filter: 100%|██████████| 7851/7851 [00:03<00:00, 2419.72 examples/s]
+Map:   0%|          | 0/7846 [00:00<?, ? examples/s]Map:   2%|▏         | 172/7846 [00:00<00:04, 1704.84 examples/s]Map:   5%|▌         | 425/7846 [00:00<00:04, 1678.67 examples/s]Map:   9%|▉         | 696/7846 [00:00<00:04, 1731.66 examples/s]Map:  12%|█▏        | 923/7846 [00:00<00:04, 1637.47 examples/s]Map:  14%|█▍        | 1107/7846 [00:01<00:08, 803.01 examples/s]Map:  17%|█▋        | 1302/7846 [00:01<00:06, 978.01 examples/s]Map:  19%|█▉        | 1481/7846 [00:01<00:05, 1125.88 examples/s]Map:  21%|██        | 1655/7846 [00:01<00:04, 1248.19 examples/s]Map:  24%|██▎       | 1855/7846 [00:01<00:04, 1415.75 examples/s]Map:  27%|██▋       | 2098/7846 [00:01<00:06, 830.17 examples/s] Map:  29%|██▉       | 2278/7846 [00:02<00:05, 973.45 examples/s]Map:  32%|███▏      | 2475/7846 [00:02<00:04, 1143.85 examples/s]Map:  34%|███▍      | 2689/7846 [00:02<00:03, 1341.20 examples/s]Map:  37%|███▋      | 2884/7846 [00:02<00:03, 1463.60 examples/s]Map:  40%|███▉      | 3110/7846 [00:02<00:05, 817.66 examples/s] Map:  42%|████▏     | 3290/7846 [00:03<00:04, 958.36 examples/s]Map:  44%|████▍     | 3477/7846 [00:03<00:03, 1111.48 examples/s]Map:  47%|████▋     | 3653/7846 [00:03<00:03, 1231.12 examples/s]Map:  49%|████▉     | 3841/7846 [00:03<00:02, 1366.93 examples/s]Map:  52%|█████▏    | 4086/7846 [00:03<00:04, 798.83 examples/s] Map:  55%|█████▍    | 4285/7846 [00:03<00:03, 966.53 examples/s]Map:  57%|█████▋    | 4460/7846 [00:04<00:03, 1092.78 examples/s]Map:  59%|█████▉    | 4630/7846 [00:04<00:02, 1208.62 examples/s]Map:  61%|██████    | 4799/7846 [00:04<00:02, 1300.32 examples/s]Map:  64%|██████▎   | 4997/7846 [00:04<00:01, 1458.42 examples/s]Map:  66%|██████▌   | 5196/7846 [00:04<00:03, 792.64 examples/s] Map:  68%|██████▊   | 5369/7846 [00:04<00:02, 930.34 examples/s]Map:  71%|███████   | 5548/7846 [00:05<00:02, 1076.70 examples/s]Map:  73%|███████▎  | 5736/7846 [00:05<00:01, 1238.03 examples/s]Map:  76%|███████▌  | 5935/7846 [00:05<00:01, 1389.44 examples/s]Map:  79%|███████▉  | 6202/7846 [00:05<00:01, 842.08 examples/s] Map:  82%|████████▏ | 6398/7846 [00:05<00:01, 1002.47 examples/s]Map:  84%|████████▍ | 6586/7846 [00:05<00:01, 1152.15 examples/s]Map:  87%|████████▋ | 6790/7846 [00:06<00:00, 1326.05 examples/s]Map:  89%|████████▉ | 6974/7846 [00:06<00:00, 1436.98 examples/s]Map:  92%|█████████▏| 7202/7846 [00:06<00:00, 838.70 examples/s] Map:  94%|█████████▍| 7395/7846 [00:06<00:00, 1000.11 examples/s]Map:  96%|█████████▋| 7563/7846 [00:06<00:00, 1118.09 examples/s]Map:  99%|█████████▉| 7753/7846 [00:07<00:00, 1267.28 examples/s]Map: 100%|██████████| 7846/7846 [00:07<00:00, 1061.61 examples/s]
+Using the `WANDB_DISABLED` environment variable is deprecated and will be removed in v5. Use the --report_to flag to control the integrations used for logging result (for instance --report_to none).
+Detected kernel version 5.4.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+Model Size:  8126208
+T5ForConditionalGeneration(
+  (shared): Embedding(1000, 256)
+  (encoder): T5Stack(
+    (embed_tokens): Embedding(1000, 256)
+    (block): ModuleList(
+      (0): T5Block(
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            (SelfAttention): T5Attention(
+              (q): Linear(in_features=256, out_features=128, bias=False)
+              (k): Linear(in_features=256, out_features=128, bias=False)
+              (v): Linear(in_features=256, out_features=128, bias=False)
+              (o): Linear(in_features=128, out_features=256, bias=False)
+              (relative_attention_bias): Embedding(32, 4)
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            (DenseReluDense): T5DenseGatedActDense(
+              (wi_0): Linear(in_features=256, out_features=1024, bias=False)
+              (wi_1): Linear(in_features=256, out_features=1024, bias=False)
+              (wo): Linear(in_features=1024, out_features=256, bias=False)
+              (dropout): Dropout(p=0.1, inplace=False)
+              (act): NewGELUActivation()
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (1-3): 3 x T5Block(
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            (SelfAttention): T5Attention(
+              (q): Linear(in_features=256, out_features=128, bias=False)
+              (k): Linear(in_features=256, out_features=128, bias=False)
+              (v): Linear(in_features=256, out_features=128, bias=False)
+              (o): Linear(in_features=128, out_features=256, bias=False)
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            (DenseReluDense): T5DenseGatedActDense(
+              (wi_0): Linear(in_features=256, out_features=1024, bias=False)
+              (wi_1): Linear(in_features=256, out_features=1024, bias=False)
+              (wo): Linear(in_features=1024, out_features=256, bias=False)
+              (dropout): Dropout(p=0.1, inplace=False)
+              (act): NewGELUActivation()
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+    )
+    (final_layer_norm): T5LayerNorm()
+    (dropout): Dropout(p=0.1, inplace=False)
+  )
+  (decoder): T5Stack(
+    (embed_tokens): Embedding(1000, 256)
+    (block): ModuleList(
+      (0): T5Block(
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            (SelfAttention): T5Attention(
+              (q): Linear(in_features=256, out_features=128, bias=False)
+              (k): Linear(in_features=256, out_features=128, bias=False)
+              (v): Linear(in_features=256, out_features=128, bias=False)
+              (o): Linear(in_features=128, out_features=256, bias=False)
+              (relative_attention_bias): Embedding(32, 4)
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            (EncDecAttention): T5Attention(
+              (q): Linear(in_features=256, out_features=128, bias=False)
+              (k): Linear(in_features=256, out_features=128, bias=False)
+              (v): Linear(in_features=256, out_features=128, bias=False)
+              (o): Linear(in_features=128, out_features=256, bias=False)
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            (DenseReluDense): T5DenseGatedActDense(
+              (wi_0): Linear(in_features=256, out_features=1024, bias=False)
+              (wi_1): Linear(in_features=256, out_features=1024, bias=False)
+              (wo): Linear(in_features=1024, out_features=256, bias=False)
+              (dropout): Dropout(p=0.1, inplace=False)
+              (act): NewGELUActivation()
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (1-3): 3 x T5Block(
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            (SelfAttention): T5Attention(
+              (q): Linear(in_features=256, out_features=128, bias=False)
+              (k): Linear(in_features=256, out_features=128, bias=False)
+              (v): Linear(in_features=256, out_features=128, bias=False)
+              (o): Linear(in_features=128, out_features=256, bias=False)
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            (EncDecAttention): T5Attention(
+              (q): Linear(in_features=256, out_features=128, bias=False)
+              (k): Linear(in_features=256, out_features=128, bias=False)
+              (v): Linear(in_features=256, out_features=128, bias=False)
+              (o): Linear(in_features=128, out_features=256, bias=False)
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            (DenseReluDense): T5DenseGatedActDense(
+              (wi_0): Linear(in_features=256, out_features=1024, bias=False)
+              (wi_1): Linear(in_features=256, out_features=1024, bias=False)
+              (wo): Linear(in_features=1024, out_features=256, bias=False)
+              (dropout): Dropout(p=0.1, inplace=False)
+              (act): NewGELUActivation()
+            )
+            (layer_norm): T5LayerNorm()
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+    )
+    (final_layer_norm): T5LayerNorm()
+    (dropout): Dropout(p=0.1, inplace=False)
+  )
+  (lm_head): Linear(in_features=256, out_features=1000, bias=False)
+)
+Config saved to  /data6/helya/RLLM/results/train/t5/run37_20241105-120246
+train
+TrainerControl(should_training_stop=False, should_epoch_stop=False, should_save=False, should_evaluate=False, should_log=False)
+  0%|          | 0/1000000 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/data6/helya/RLLM/main.py", line 167, in <module>
+    main(args ,wandb)
+  File "/data6/helya/RLLM/main.py", line 136, in main
+    train(args=args, wandb=wandb, model=model, train_dataset=train_dataset, eval_dataset=eval_dataset)
+  File "/data6/helya/RLLM/train.py", line 128, in train
+    trainer.train()
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/trainer.py", line 1864, in train
+    return inner_training_loop(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/trainer.py", line 2209, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/trainer.py", line 3148, in training_step
+    loss = self.compute_loss(model, inputs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/trainer.py", line 3173, in compute_loss
+    outputs = model(**inputs)
+              ^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/models/t5/modeling_t5.py", line 1746, in forward
+    decoder_outputs = self.decoder(
+                      ^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/models/t5/modeling_t5.py", line 1110, in forward
+    layer_outputs = layer_module(
+                    ^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/models/t5/modeling_t5.py", line 689, in forward
+    self_attention_outputs = self.layer[0](
+                             ^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/models/t5/modeling_t5.py", line 596, in forward
+    attention_output = self.SelfAttention(
+                       ^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/transformers/models/t5/modeling_t5.py", line 559, in forward
+    attn_weights = nn.functional.dropout(
+                   ^^^^^^^^^^^^^^^^^^^^^^
+  File "/var/anaconda3/envs/rllm/lib/python3.12/site-packages/torch/nn/functional.py", line 1270, in dropout
+    return _VF.dropout_(input, p, training) if inplace else _VF.dropout(input, p, training)
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 256.00 MiB. GPU 0 has a total capacty of 10.75 GiB of which 175.62 MiB is free. Including non-PyTorch memory, this process has 10.58 GiB memory in use. Of the allocated memory 9.83 GiB is allocated by PyTorch, and 9.25 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+  0%|          | 0/1000000 [00:02<?, ?it/s]

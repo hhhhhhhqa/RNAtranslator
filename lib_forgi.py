@@ -2636,3 +2636,6 @@ def bg_from_subgraph(bg, sg):
                 nbg.edges[e].add(conn)
 
     return nbg
+
+
+    
