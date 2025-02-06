@@ -39,6 +39,33 @@ def calculate_token_distribution(rna_sequences, vocab_size, tokenizer):
 
     return token_frequencies
 
+
+def plot_radar_chart(data, categories, group_labels, filename):
+    """
+    - data: A 2D list or NumPy array where each row corresponds to a different RNA group.
+    - categories: List of structure types (e.g., ["Stem", "Hairpin", "Bulge"])
+    - group_labels: Labels for RNA groups (e.g., ["Generated", "Random", "Natural", "Binding"])
+    - filename: Path to save the figure.
+    """
+    num_vars = len(categories)
+
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+
+    for i, (values, label) in enumerate(zip(data, group_labels)):
+        values = np.concatenate((values, [values[0]]))
+        ax.plot(angles, values, label=label, linewidth=2, color=color_palette[i % len(color_palette)])
+        ax.fill(angles, values, alpha=0.15)
+
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(categories, fontsize=12)
+    ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1))
+    plt.title("RNA Secondary Structure Distribution", fontsize=14)
+    plt.savefig(filename, bbox_inches='tight')
+    plt.close()
+
 def report_gc_content(generated_sequences, dir, step, save=True):
     generated_gc_contents = [calculate_gc_content(seq) for seq in generated_sequences]
     generated_mean = np.mean(generated_gc_contents)
@@ -293,5 +320,77 @@ def compare_rna_length(rna_sequences_dict, dir) -> None:
     plot_violin_compare(length_distributions, labels, "RNA Sequence Length", f"{dir}/length/length_violin.png")
     plot_box_compare(length_distributions, labels, "RNA Sequence Length", f"{dir}/length/length_box.png")
     plot_density_compare(length_distributions, labels, "RNA Sequence Length", f"{dir}/length/length_density.png", False)
+
+    return None
+
+def compare_radars(data_dict, filename):
+    """
+    Compares RNA secondary structure distributions using a radar chart.
+
+    Parameters:
+    - data_dict: A dictionary where keys are RNA structure categories (e.g., "Stem", "Hairpin")
+                 and values are lists of proportions for different RNA groups.
+                 Example:
+                 {
+                     "Stem": [0.3, 0.4, 0.5, 0.2],
+                     "Hairpin": [0.2, 0.3, 0.4, 0.1],
+                     "Bulge": [0.1, 0.2, 0.3, 0.05]
+                 }
+    - filename: Path to save the radar chart.
+    """
+    categories = list(data_dict.keys())
+    data = np.array(list(data_dict.values())).T  # Transpose to match the format for radar chart
+    group_labels = ["Generated", "Random", "Natural", "Binding"]
+
+    plot_radar_chart(data, categories, group_labels, filename)
+
+def compare_structure_distribution_Radar(rna_sequences_dict, dir, path_to_rnafold="RNAfold") -> None:
+    """
+    Compares RNA secondary structure distributions across different RNA groups using a radar chart.
+
+    Parameters:
+    - rna_sequences_dict: Dictionary with group names as keys and lists of RNA sequences as values.
+    - dir: Directory to save the radar chart.
+    - path_to_rnafold: Path to the RNAfold executable.
+    """
+    structure_distributions = {label: {key: 0 for key in ['F', 'T', 'I', 'H', 'M', 'S']} for label in rna_sequences_dict.keys()}
+    labels = list(rna_sequences_dict.keys())
+
+    for group_name, rna_seqs in rna_sequences_dict.items():
+        for seq in rna_seqs:
+            struct_annotation = get_struct_annotation_viennaRNA(seq, path_to_rnafold)
+            total_length = len(seq)
+            for struct in struct_annotation:
+                if struct in structure_distributions[group_name]:
+                    structure_distributions[group_name][struct] += 1
+        for struct_type in structure_distributions[group_name]:
+            structure_distributions[group_name][struct_type] /= total_length
+
+    # Mann-Whitney U Test for each structure type between groups
+    results = {}
+    structure_types = ['F', 'T', 'I', 'H', 'M', 'S']
+    
+    for struct_type in structure_types:
+        values = [structure_distributions[label][struct_type] for label in labels]
+        for i in range(len(labels)):
+            for j in range(i + 1, len(labels)):
+                u_stat, p_value = mannwhitneyu(
+                    values[i],
+                    values[j],
+                    alternative='two-sided'
+                )
+                results[f"{labels[i]} vs {labels[j]} ({struct_type})"] = (u_stat, p_value)
+
+    for comparison, (u_stat, p_value) in results.items():
+        print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
+
+    os.makedirs(f"{dir}/structure", exist_ok=True)
+
+    # Prepare data for the radar chart
+    data_dict = {struct: [structure_distributions[label][struct] for label in labels] for struct in structure_types}
+    filename = f"{dir}/structure/secondary_structure_radar.png"
+
+    # Generate radar chart
+    compare_radars(data_dict, filename)
 
     return None
