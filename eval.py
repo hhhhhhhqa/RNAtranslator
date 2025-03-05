@@ -10,7 +10,7 @@ import numpy as np
 import torch.nn.functional as F
 
 from src.utils.helpers import *
-from src.utils.validations import compare_gc_content, compare_mfe_distribution, compare_rna_similarity, compare_structure_distribution, compare_rna_length
+from src.utils.validations import *
 from src.utils.plots import *
 
 import torch
@@ -18,7 +18,7 @@ import torch
 
 def evaluate(eval_dir, protein=None):
     rnas = fasta_to_dict(eval_dir+"/rnas.fasta")
-    compare_structure_distribution(rnas, eval_dir)
+    
     
     if protein:
         scores = read_deepclip_output(eval_dir+f"/{protein}.json")
@@ -33,10 +33,17 @@ def evaluate(eval_dir, protein=None):
         plot_ridge_compare(data , labels, "Binding Score", "{}/deepclip/ridge_plot_output.png".format(eval_dir))
         plot_density_compare(data , labels, "Binding Score", '{}/deepclip/density_plot_output.png'.format(eval_dir))
 
+    # compare_dG_unfolding_distribution(rnas, eval_dir)
     compare_gc_content(rnas, eval_dir)
     compare_mfe_distribution(rnas, eval_dir)
-    compare_rna_similarity(rnas, 3, eval_dir)
+    
+    # compare_rna_similarity(rnas, 3, eval_dir)
+    # compare_sampling_similarity(eval_dir +"/"+protein+"_pool.fasta", 3, eval_dir)
+
     compare_rna_length(rnas, eval_dir)
+    # compare_structure_distribution(rnas, eval_dir)
+
+
     # with open(json_file_path, "r") as file:
     #     data = json.load(file)
 

@@ -3,10 +3,9 @@ import os
 
 from src.utils.helpers import * 
 
-MAX_LEN = 32
 clip_directory = "/data6/sobhan/RLLM_OPT/deepclip_models" 
 
-def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_token=MAX_LEN, strategy='beam_search', temperature=1.0, num_beams=5, top_k=None, top_p=None):
+def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_token=32, strategy='beam_search', temperature=1.0, num_beams=5, top_k=None, top_p=None):
     inputs = torch.tensor(prot_ids, dtype=torch.long).unsqueeze(0).to(model.device)
     
     candidate_rnas = []
@@ -14,8 +13,8 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_tok
         num_candidates = num_beams
 
     gen_args = {
-        'max_length': 12,
-        'min_length': 5,
+        'max_length': int(max_token/3),
+        'min_length': 20,
         'repetition_penalty': 1.5,
         'encoder_repetition_penalty': 1.3,
         'num_return_sequences': 128,
@@ -49,7 +48,7 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_tok
         })
 
     while len(candidate_rnas) < num_candidates:
-        # print("GEnerating: ", len(candidate_rnas), "/nNum Candidates: ", num_candidates)
+        print("GEnerating: ", len(candidate_rnas), "/nNum Candidates: ", num_candidates)
         with torch.no_grad():
             seqs = model.generate(inputs, **gen_args)
             
@@ -71,12 +70,11 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_tok
 
 
 
-def fasta_to_fasta(input_path, output_path, max_rnas, min_len=10, max_len=MAX_LEN+5):
+def fasta_to_fasta(input_path, output_path, max_rnas, min_len=10, max_len=37):
     rnas = []
 
     with open(input_path, "r") as infile, open(output_path, "w") as outfile:
         if input_path.endswith(".txt"):
-            # TXT mode: filter and write in one pass
             for count, line in enumerate(infile):
                 if count >= max_rnas:
                     break
@@ -120,7 +118,7 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
             {'top_k': 30, 'temperature': 1.5, 'num_beams': 1},
             {'top_k': 100, 'temperature': 0.7, 'num_beams': 1},
             {'top_k': 100, 'temperature': 1.0, 'num_beams': 1},
-            {'top_k': 100, 'temperature': 1.5, 'num_beams': 1},
+            # {'top_k': 100, 'temperature': 1.5, 'num_beams': 1},
         ],
         'top_p': [
             # {'top_p': 0.8, 'temperature': 0.7, 'num_beams': 1},
@@ -128,7 +126,7 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
             {'top_p': 0.8, 'temperature': 1.5, 'num_beams': 1},
             {'top_p': 0.95, 'temperature': 0.7, 'num_beams': 1},
             {'top_p': 0.95, 'temperature': 1.0, 'num_beams': 1},
-            {'top_p': 0.95, 'temperature': 1.5, 'num_beams': 1},
+            # {'top_p': 0.95, 'temperature': 1.5, 'num_beams': 1},
         ],
         'sample': [
             {'temperature': 0.7, 'num_beams': 1},
@@ -160,6 +158,7 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
                     prot_ids,
                     rna_tokenizer,
                     args.rna_num,
+                    max_token=args.max_len,
                     strategy=strategy,
                     temperature=temperature,
                     num_beams=num_beams,
@@ -187,25 +186,26 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
 
 def aggregate(args):
     rna_files = {
-        "natural": "/data6/sobhan/dataset/DeepCLIP/RBM5_for.fa",
-        "binding": f"/data6/helya/dataset/CLIPdb_cluster/cd_hit_results_RBPs/identity_100/{args.proteins[0].upper()}_rnas_cdhit_100.fa",
-        # "rnagen": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
-        "generated": f"{args.eval_dir}/{args.proteins[0]}_filtered.fasta"
+        "Natural_non-binding": "/data6/sobhan/dataset/DeepCLIP/RBM5_for.fa",
+        "Natural_Binding": f"/data6/helya/dataset/CLIPdb_cluster/cd_hit_results_RBPs/identity_100/{args.proteins[0].upper()}_rnas_cdhit_100.fa",
+        # "RNAGEN_Generated": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
+        "RNAtranslator_ ": f"{args.eval_dir}/{args.proteins[0]}_filtered.fasta"
     }
 
     filtered_paths = {
         key: os.path.join(args.eval_dir, f"{key}_rnas.fasta") for key in rna_files
     }
     filtered_rnas = {
-        key: fasta_to_fasta(path, filtered_paths[key], args.rna_num)
+        key: fasta_to_fasta(path, filtered_paths[key], args.rna_num, min_len=15, max_len=args.max_len+5)
         for key, path in rna_files.items()
     }
+    # print(filtered_rnas)
 
     combined_path = os.path.join(args.eval_dir, "rnas.fasta")
     with open(combined_path, "w") as outfile:
         for key, rnas in filtered_rnas.items():
             for idx, rna in enumerate(rnas):
-                outfile.write(f">{key.upper()}_RNA_{idx}\n{rna}\n")
+                outfile.write(f">{key}_RNA_{idx}\n{rna}\n")
         # for idx, rna in enumerate(gen_rnas):
         #     outfile.write(f">Generated_RNA_{idx}\n{rna}\n")
 
@@ -263,11 +263,12 @@ def read_pool(fasta_file):
     return candidates
 
 
-def calc_scores(candidates, phi_cons=0.3, phi2_mfe=0.1, phi3_bind=1):
+def calc_scores(args, candidates, phi_cons=0.3, phi2_mfe=0.1, phi3_bind=1):
     rnas = [cand['rna'] for cand in candidates]
 
-    #Binding Affinity
-    predictions = calc_deep_clip(copy.deepcopy(rnas), protein_name) 
+    if args.max_len < 75 and not args.ignore_clip:
+        #Binding Affinity
+        predictions = calc_deep_clip(copy.deepcopy(rnas), protein_name) 
 
     #Foldability
     mfes = calculate_mfe_many(copy.deepcopy(rnas)) 
@@ -279,11 +280,16 @@ def calc_scores(candidates, phi_cons=0.3, phi2_mfe=0.1, phi3_bind=1):
     max_vote = vote_counts.most_common(1)[0][1]
 
     for index, cand in enumerate(candidates):
-        cand["deepclip_score"] = predictions.pop(0)[0]
+        if args.max_len < 75 and not args.ignore_clip:
+            cand["deepclip_score"] = predictions.pop(0)[0]
         cand["MFE"] = mfes.pop(0)
         cand["MFE_score"] = normalized_mfes.pop(0)
         cand["vote_score"] = vote_counts[cand["rna"]] / max_vote
-        cand["final_score"] = phi3_bind*cand["deepclip_score"] + phi2_mfe*cand["MFE_score"] + phi_cons*cand["vote_score"]
+
+        if args.max_len < 75 and not args.ignore_clip:
+            cand["final_score"] = phi3_bind*cand["deepclip_score"] + phi2_mfe*cand["MFE_score"] + phi_cons*cand["vote_score"]
+        else:
+            cand["final_score"] = phi2_mfe*cand["MFE_score"] + phi_cons*cand["vote_score"]
 
     return candidates
 
@@ -303,6 +309,8 @@ def parse_opt():
     parser.add_argument('--proteins', nargs='+', default=['hnrpnc', 'ago2', 'elavl1', 'rbm5'], type=str, help='List of protein names or IDs')
     parser.add_argument('--rna_num', default=128, type=int, help='Number of RNAs to generate per setting')
     parser.add_argument('--top_num', default=128, type=int, help='Number of TOP n RNAs to be selected from the Pool of RNAs')
+    parser.add_argument('--max_len', default=32, type=int, help='Maximum length of RNA sequence')
+    parser.add_argument('--ignore_clip', default=False, type=bool, help='If ignore the deepclip score')
 
 
     args = parser.parse_args()    
@@ -389,7 +397,7 @@ if __name__ == "__main__":
             pool_file = os.path.join(args.eval_dir, f"{protein_name}_pool.fasta")
             if os.path.exists(pool_file):
                 candidates = read_pool(pool_file) # READING POOL FILE
-                candidates = calc_scores(candidates) # CALCULATING SCORES
+                candidates = calc_scores(args, candidates) # CALCULATING SCORES
                 sorted_candidates = sorted(candidates, key=lambda x: x["final_score"], reverse=True) # SORTING
 
                 # Remove the duplicated RNAs

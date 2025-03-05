@@ -5,6 +5,12 @@ import random
 import numpy as np
 import json
 import pandas as pd
+import re
+import lib_forgi
+from lib_forgi import BulgeGraph
+import tempfile
+import subprocess
+import RNA
 
 
 # from generate import generate_
@@ -191,14 +197,13 @@ def fasta_to_dict(fasta_file):
             line = line.strip()
             if line.startswith('>'):
                 header = line[1:]
-                prefix = header.split('_')[0]
+                prefix = header.split('_')[0] + " " +header.split('_')[1]
                 current_group = prefix
                 if current_group not in rna_groups:
                     rna_groups[current_group] = []
             else:
                 if current_group is not None:
                     rna_groups[current_group].append(line)
-
     return rna_groups
 
 def calculate_kmer_features(rna_sequences, k):
@@ -222,7 +227,7 @@ def read_deepclip_output(json_path):
         scores = {}
 
         for prediction in data.get("predictions", []):
-            group_name = prediction["id"].split("_")[0]
+            group_name = prediction["id"].split("_")[0]+ " "  + prediction["id"].split("_")[1]
             if group_name not in scores:
                 scores[group_name] = []
             scores[group_name].append(prediction["score"])
@@ -230,40 +235,49 @@ def read_deepclip_output(json_path):
     return scores
 
 
-import re
-import numpy as np
-import lib_forgi  # imported as "import forgi" if installed as "forgi"
-from lib_forgi import BulgeGraph
-import tempfile
-import subprocess
+# def run_rosetta_rna(name, fasta_file, output_dir):
+#     npz_file = f"{name}.npz"
+#     command = [
+#         "python predict.py",  # or the specific executable name
+#         "-i", fasta_file,
+#         "--output", npz_file
+#     ]
+#     subprocess.run(command, check=True)
 
-# Map the forgi single-letter annotation to F, T, I, H, M, S
-# forgi annotation -> Our labels
-# f = 'dangling start'
-# t = 'dangling end'
-# i = 'internal loop'
-# h = 'hairpin loop'
-# m = 'multi loop'
-# s = 'stem'
+#         command = [
+#         "python fold.py",  # or the specific executable name
+#         "-OUT", f'{output_dir}',
+#         "-npz", npz_file,
+#         "-fasta", fasta_file
+#     ]
+#     subprocess.run(command, check=True)
+
+#     print("Structure Predicdocker --versiontion Done for ", name)
+
+
+# def run_hdocklite(rna, protein, output_dir):
+#     subprocess.run(["/data6/sobhan/docking/HDOCK/hdock", f"{protein}", f"{rna}", "-out", f"{output_dir}/Hdock.out"], check=True)
+#     subprocess.run(["/data6/sobhan/docking/HDOCK/createpl", f"{output_dir}/Hdock.out", "top100.pdb", "-nmax", "100", "-complex", "-models"], check=True)
+#     print("Hdock Done for ", rna, protein)
+
+
+###################### RNA Secondary Structure Annotations ######################
 
 ENTITY_LOOKUP = {
-    'f': 0,  # dangling start
-    't': 1,  # dangling end
-    'i': 2,  # internal loop
-    'h': 3,  # hairpin loop
-    'm': 4,  # multi-loop
-    's': 5,  # stem
-    'b': 6   # bulge
+    'b': 0,  # Bulge
+    'f': 1,  # Dangling start
+    't': 2,  # Dangling end
+    'i': 3,  # Internal loop
+    'h': 4,  # Hairpin loop
+    'm': 5,  # Multi-loop
+    's': 6   # Stem
 }
-LABELS = ['F', 'T', 'I', 'H', 'M', 'S', 'B']
+LABELS = ['B', 'F', 'T', 'I', 'H', 'M', 'S']
 
 def detect_bulges(dot_bracket):
-    """
-    Detect bulge positions in a dot-bracket sequence.
-    Bulges are defined as unpaired bases between paired bases.
-    """
+    """Detect bulge positions in a dot-bracket sequence."""
     bulge_positions = set()
-    stack = []  
+    stack = []
     
     for i, char in enumerate(dot_bracket):
         if char == '(':
@@ -271,98 +285,50 @@ def detect_bulges(dot_bracket):
         elif char == ')':
             if stack:
                 stack.pop()
-        elif char == '.':
-            
-            if i > 0 and i < len(dot_bracket) - 1:
-                if dot_bracket[i - 1] == '(' and dot_bracket[i + 1] == ')':
-                    bulge_positions.add(i)
+        elif char == '.' and 0 < i < len(dot_bracket) - 1:
+            if dot_bracket[i - 1] == '(' and dot_bracket[i + 1] == ')':
+                bulge_positions.add(i)
     
     return bulge_positions
 
 def parse_dot_bracket_to_labels(dot_bracket: str):
-    """
-    Parse a dot-bracket string using Forgi to label each nucleotide with 
-    relevant RNA-protein binding structures: [F, T, I, H, M, S, B].
-    
-    Returns:
-        labels: a list of length len(dot_bracket), where each element is 
-                one of ['F', 'T', 'I', 'H', 'M', 'S', 'B'].
-    """
-  
     bg = BulgeGraph()
     bg.from_dotbracket(dot_bracket, None)
-
     
     num_positions = len(dot_bracket)
     structure_matrix = np.zeros((7, num_positions), dtype=int)
 
-  
     for line in bg.to_bg_string().split('\n'):
         line = line.strip()
         if line.startswith('define'):
             parts = line.split()
-            entity = parts[1][0]  
-            entity_index = ENTITY_LOOKUP.get(entity, None)
+            entity = parts[1][0]
+            entity_index = ENTITY_LOOKUP.get(entity)
             if entity_index is not None and len(parts) > 2:
-                start_idx = int(parts[2]) - 1
-                end_idx = int(parts[3]) - 1
-                for i in range(start_idx, end_idx + 1):
-                    structure_matrix[entity_index, i] = 1
+                start_idx, end_idx = int(parts[2]) - 1, int(parts[3]) - 1
+                structure_matrix[entity_index, start_idx:end_idx + 1] = 1
 
-    
-    bulge_positions = detect_bulges(dot_bracket)
-    for i in bulge_positions:
+    for i in detect_bulges(dot_bracket):
         structure_matrix[ENTITY_LOOKUP['b'], i] = 1
-
-
-    labels_per_nucleotide = []
+    
+    labels = []
     for pos in range(num_positions):
-        row_indices = np.where(structure_matrix[:, pos] == 1)[0]
-        if len(row_indices) > 0:
-            label_index = row_indices[0]  
-            labels_per_nucleotide.append(LABELS[label_index])
+        if structure_matrix[ENTITY_LOOKUP['b'], pos] == 1:
+            labels.append('B')
         else:
-            labels_per_nucleotide.append(' ')  
-
-    return labels_per_nucleotide
-
-def get_struct_annotation_viennaRNA(rna_sequence: str, path_to_rnafold: str = "RNAfold") -> list:
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp_fasta:
-        tmp_fasta_name = tmp_fasta.name
-        tmp_fasta.write(f">test_sequence\n{rna_sequence}\n")
-    
-    # 2. Run RNAfold (ViennaRNA). The output typically has lines:
-    #    sequence, then dot-bracket + energy like "....((..))... (-7.4)"
-    command = f"cat {tmp_fasta_name} | {path_to_rnafold}"
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-    
-    # 3. Parse the output to find dot-bracket structure
-    stdout_str = result.stdout.decode('utf-8').strip().split('\n')
-    # Example lines:
-    # >test_sequence
-    # ACGUGAAGGCUUCGAGGCUU
-    # ....((..))...((..)) (-3.20)
-    dot_bracket = None
-    for line in stdout_str:
-        line = line.strip()
-        # This line usually ends with an energy in parentheses, e.g. "....(...) (-2.30)"
-        # We'll extract the portion before the space
-        match = re.match(r"([\.\(\)]+)\s+\(.*\)", line)
-        if match:
-            dot_bracket = match.group(1)
-            break
-    
-    # 4. If found, label using forgi
-    if dot_bracket is not None:
-        # print(dot_bracket)
-        labels = parse_dot_bracket_to_labels(dot_bracket)
-    else:
-        labels = [" "] * len(rna_sequence)
-    
-    # 5. Clean up
-    try:
-        os.remove(tmp_fasta_name)
-    except:
-        pass
+            row_indices = np.where(structure_matrix[:, pos] == 1)[0]
+            labels.append(LABELS[row_indices[0]] if row_indices.size > 0 else ' ')
     
     return labels
+
+
+def get_structure_annotations(sequence, method="rnafold"):
+    if method == "rnafold":
+        dot_bracket, mfe = RNA.fold(sequence)
+    elif method == "mxfold2":
+        mx_fold=MXFold2API()
+        dot_bracket = mx_fold.predict("sdada", sequence)
+    else:
+        raise ValueError(f"Invalid method: {method}")
+
+    return parse_dot_bracket_to_labels(dot_bracket) if dot_bracket else [" "] * len(rna_sequence)
