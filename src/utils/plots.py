@@ -4,13 +4,15 @@ import matplotlib
 import seaborn as sns
 import pandas as pd
 
-params = {'legend.fontsize': 48,
-        'figure.figsize': (54, 32),
-        'axes.labelsize': 60,
-        'axes.titlesize':60,
-        'xtick.labelsize':60,
-        'ytick.labelsize':60,
-        'lines.linewidth': 10}
+params = {'legend.fontsize': 20,
+        'figure.figsize': (14, 8),
+        'axes.labelsize': 20,
+        'axes.titlesize':20,
+        'xtick.labelsize':20,
+        'ytick.labelsize':20,
+        'lines.linewidth': 3}
+
+color_palette = ["#E74C3C", "#3498DB", "#1ABC9C", "#E67E22", "#F1C40F", "#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"]
 
 plt.rcParams.update(params)
 
@@ -228,7 +230,7 @@ def plot_violin_compare(data_arrays, labels, ylabel, filename, limit=True):
     sns.violinplot(
         data=data_arrays,
         inner='box', 
-        palette=["#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"],
+        palette=color_palette,
         width=0.6,  
         linewidth=1.5,  
         fliersize=4,  
@@ -255,7 +257,7 @@ def plot_ridge_compare(data_arrays, labels, xlabel, filename):
 
     # Dynamic plot based on number of categories
     g = sns.FacetGrid(df_melted, row="Category", hue="Category", aspect=3, height=1.5, 
-                      palette=["#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"],)
+                      palette=color_palette,)
     g.map(sns.kdeplot, "Value", fill=True, alpha=0.6)
 
     # Customize plot
@@ -283,7 +285,7 @@ def plot_density_compare(data_arrays, labels, xlabel, filename, limit=True):
         sns.kdeplot(data, fill=True, label=label, alpha=0.3)
 
     plt.xlabel(xlabel, labelpad=20)
-    plt.legend()
+    plt.legend(loc="upper left")
 
     if limit:
         plt.xlim(0, 1)
@@ -297,7 +299,7 @@ def plot_box_compare(data_arrays, labels, ylabel, filename):
     plt.figure()
     sns.boxplot(
         data=data_arrays,
-        palette=["#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"],  # Dynamic color palette based on input size
+        palette=color_palette,  # Dynamic color palette based on input size
         width=0.6,  
         linewidth=1.5,  
         fliersize=4,  

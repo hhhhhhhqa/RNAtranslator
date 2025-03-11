@@ -7,6 +7,17 @@ from src.utils.plots import *
 from src.utils.helpers import *
 from scipy.stats import mannwhitneyu
 
+
+def calculate_dG_unfolding(sequence):
+    fc = RNA.fold_compound(sequence)
+    _, ensemble_energy = fc.pf()
+    return ensemble_energy 
+
+def calculate_dG_unfolding_many(sequences):
+    dG_values = [calculate_dG_unfolding(seq) for seq in sequences]
+    return dG_values
+
+
 def calculate_mfe(sequence):
     _, mfe = RNA.fold(sequence)
     return mfe
@@ -191,6 +202,32 @@ def compare_mfe_distribution(rna_sequences_dict, dir) -> None:
     plot_violin_compare(distributions, labels, "MFE", f"{dir}/mfe/mfe_violin.png")
     plot_box_compare(distributions, labels, "MFE", f"{dir}/mfe/mfe_box.png")
     plot_density_compare(distributions, labels, "MFE", f'{dir}/mfe/density_plot_mfe_output.png', False)
+
+    return None
+
+
+def compare_dG_unfolding_distribution(rna_sequences_dict, dir) -> None:
+    distributions = []
+    labels = list(rna_sequences_dict.keys())
+
+    for group_name, rna_seqs in rna_sequences_dict.items():
+        distribution = calculate_dG_unfolding_many(rna_seqs)
+        distributions.append(distribution)
+
+    results = {}
+    for i in range(len(distributions)):
+        for j in range(i + 1, len(distributions)):
+            u_stat, p_value = mannwhitneyu(distributions[i], distributions[j], alternative='two-sided')
+            results[f"{labels[i]} vs {labels[j]}"] = (u_stat, p_value)
+
+    for comparison, (u_stat, p_value) in results.items():
+        print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
+
+    os.makedirs(f"{dir}/dg", exist_ok=True)
+
+    plot_violin_compare(distributions, labels, "ΔG Unfolding", f"{dir}/dg/dg_violin.png")
+    plot_box_compare(distributions, labels, "ΔG Unfolding", f"{dir}/dg/dg_box.png")
+    plot_density_compare(distributions, labels, "ΔG Unfolding", f'{dir}/dg/density_plot_dg_output.png', False)
 
     return None
 

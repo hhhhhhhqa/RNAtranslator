@@ -62,7 +62,7 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_tok
         
         new_candidates = [
             rna for rna in decoded_rnas
-            if (max_token - tolerance) <= len(rna) <= (max_token + tolerance)
+            if 10 <= len(rna) <= (max_token)
         ]
         candidate_rnas.extend(new_candidates)
         candidate_rnas = candidate_rnas[:num_candidates]
@@ -72,32 +72,42 @@ def gen_rna_batch(model, prot_ids, dec_tok, num_candidates, tolerance=5, max_tok
 
 def fasta_to_fasta(input_path, output_path, max_rnas, min_len=10, max_len=37):
     rnas = []
+    sequences = []
+    headers = []
 
-    with open(input_path, "r") as infile, open(output_path, "w") as outfile:
+    with open(input_path, "r") as infile:
         if input_path.endswith(".txt"):
-            for count, line in enumerate(infile):
-                if count >= max_rnas:
-                    break
-                rna = line.strip()
-                if min_len <= len(rna) <= max_len:
-                    rnas.append(rna)
-                    outfile.write(f">RNA_{count}\n{rna}\n")
+            for line in infile:
+                sequences.append(line.strip())
         else:
             seq = ""
             head = ""
             for line in infile:
                 if line.startswith(">"):
-                    if seq and min_len <= len(seq) <= max_len and len(rnas) < max_rnas:
-                        rnas.append(seq)
-                        outfile.write(head + seq + "\n")
+                    if seq:
+                        sequences.append(seq)
+                        headers.append(head)
                     head = line
                     seq = ""
                 else:
                     seq += line.strip().upper().replace("T", "U")
-            # Write the last sequence if valid
-            if seq and min_len <= len(seq) <= max_len and len(rnas) < max_rnas:
-                rnas.append(seq)
-                outfile.write(head + seq + "\n")
+            if seq:
+                sequences.append(seq)
+                headers.append(head)
+
+    valid_indices = [i for i, seq in enumerate(sequences) if min_len <= len(seq) <= max_len]
+    if not valid_indices:
+        return []
+
+    sampled_indices = random.sample(valid_indices, min(max_rnas, len(valid_indices)))
+    sampled_indices.sort() #sort to keep the order of the original file as much as possible, while still sampling.
+    with open(output_path, "w") as outfile:
+        for index in sampled_indices:
+            rnas.append(sequences[index])
+            if input_path.endswith(".txt"):
+              outfile.write(f">RNA_{len(rnas)-1}\n{sequences[index]}\n")
+            else:
+              outfile.write(headers[index]+sequences[index]+"\n")
 
     return rnas
 
@@ -113,7 +123,7 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
             {'num_beams': 200},
         ],
         'top_k': [
-            {'top_k': 30, 'temperature': 0.7, 'num_beams': 1},
+            # {'top_k': 30, 'temperature': 0.7, 'num_beams': 1},
             {'top_k': 30, 'temperature': 1.0, 'num_beams': 1},
             {'top_k': 30, 'temperature': 1.5, 'num_beams': 1},
             {'top_k': 100, 'temperature': 0.7, 'num_beams': 1},
@@ -157,7 +167,7 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
                     model,
                     prot_ids,
                     rna_tokenizer,
-                    args.rna_num,
+                    args.pool_size,
                     max_token=args.max_len,
                     strategy=strategy,
                     temperature=temperature,
@@ -186,9 +196,10 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
 
 def aggregate(args):
     rna_files = {
-        "Natural_non-binding": "/data6/sobhan/dataset/DeepCLIP/RBM5_for.fa",
+        "Natural_non-binding": "/data6/sobhan/dataset/DeepCLIP/dataset/RBM5/RBM5_negatives.txt",
         "Natural_Binding": f"/data6/helya/dataset/CLIPdb_cluster/cd_hit_results_RBPs/identity_100/{args.proteins[0].upper()}_rnas_cdhit_100.fa",
-        # "RNAGEN_Generated": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
+        # "RNAGEN_ ": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
+        # "GenerRNA_ ": "/data6/sobhan/GenerRNA/rbm5_pool.fasta",
         "RNAtranslator_ ": f"{args.eval_dir}/{args.proteins[0]}_filtered.fasta"
     }
 
@@ -196,7 +207,7 @@ def aggregate(args):
         key: os.path.join(args.eval_dir, f"{key}_rnas.fasta") for key in rna_files
     }
     filtered_rnas = {
-        key: fasta_to_fasta(path, filtered_paths[key], args.rna_num, min_len=15, max_len=args.max_len+5)
+        key: fasta_to_fasta(path, filtered_paths[key], args.rna_num, min_len=10, max_len=args.max_len+5)
         for key, path in rna_files.items()
     }
     # print(filtered_rnas)
@@ -263,7 +274,7 @@ def read_pool(fasta_file):
     return candidates
 
 
-def calc_scores(args, candidates, phi_cons=0.3, phi2_mfe=0.1, phi3_bind=1):
+def calc_scores(args, candidates, phi_cons=1, phi2_mfe=1, phi3_bind=1):
     rnas = [cand['rna'] for cand in candidates]
 
     if args.max_len < 75 and not args.ignore_clip:
@@ -304,11 +315,11 @@ def parse_opt():
     parser.add_argument('--model-hyp', default="/data6/sobhan/RLLM/hyps/t5.yaml", type=str, help='Model hyperparameters')
 
     # Generation Configurations
-    parser.add_argument('--checkpoints', default='/data6/sobhan/rllm/results/train/t5/run3_20240822-152114/checkpoints/checkpoint-349800', type=str, help='Load Model')
+    parser.add_argument('--checkpoints', default='/data6/sobhan/RLLM/finetune/checkpoint-374800', type=str, help='Load Model')
     parser.add_argument('--eval-dir', default="/data6/sobhan/RLLM/results/validation/pool", type=str, help='Output dir of the evaluation')
     parser.add_argument('--proteins', nargs='+', default=['hnrpnc', 'ago2', 'elavl1', 'rbm5'], type=str, help='List of protein names or IDs')
-    parser.add_argument('--rna_num', default=128, type=int, help='Number of RNAs to generate per setting')
-    parser.add_argument('--top_num', default=128, type=int, help='Number of TOP n RNAs to be selected from the Pool of RNAs')
+    parser.add_argument('--rna_num', default=128, type=int, help='Number of RNAs to aggregate for evaluation')
+    parser.add_argument('--pool_size', default=128, type=int, help='Number of RNAs to generate per setting')
     parser.add_argument('--max_len', default=32, type=int, help='Maximum length of RNA sequence')
     parser.add_argument('--ignore_clip', default=False, type=bool, help='If ignore the deepclip score')
 
@@ -354,6 +365,7 @@ if __name__ == "__main__":
         import torch
         from transformers import T5ForConditionalGeneration
 
+        print("Loading Model: ", args.checkpoints)
         model = T5ForConditionalGeneration.from_pretrained(args.checkpoints).to(args.device)
         model.eval()
 
@@ -407,7 +419,7 @@ if __name__ == "__main__":
                     if cand["rna"] not in seen:
                         unique_candidates.append(cand)
                         seen.add(cand["rna"])
-                    if len(unique_candidates) >= args.top_num + 50:
+                    if len(unique_candidates) >= args.rna_num:
                         break
 
                 filtered_filename = os.path.join(os.path.dirname(pool_file), f"{protein_name}_filtered.fasta")

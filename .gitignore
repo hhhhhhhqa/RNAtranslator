@@ -1,5 +1,7 @@
 dataset/
 results/
+finetune/
+prediction.ipynb
 
 
 # Byte-compiled / optimized / DLL files

@@ -33,7 +33,6 @@ def evaluate(eval_dir, protein=None):
         plot_ridge_compare(data , labels, "Binding Score", "{}/deepclip/ridge_plot_output.png".format(eval_dir))
         plot_density_compare(data , labels, "Binding Score", '{}/deepclip/density_plot_output.png'.format(eval_dir))
 
-    # compare_dG_unfolding_distribution(rnas, eval_dir)
     compare_gc_content(rnas, eval_dir)
     compare_mfe_distribution(rnas, eval_dir)
     
@@ -41,6 +40,8 @@ def evaluate(eval_dir, protein=None):
     # compare_sampling_similarity(eval_dir +"/"+protein+"_pool.fasta", 3, eval_dir)
 
     compare_rna_length(rnas, eval_dir)
+    compare_dG_unfolding_distribution(rnas, eval_dir)
+
     # compare_structure_distribution(rnas, eval_dir)
 
 

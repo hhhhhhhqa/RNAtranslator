@@ -1,11 +1,10 @@
 #!/bin/bash
 
 # Parameters
-pool_size=512
-max_len=32
+pool_size=128
+max_len=37
 deepclip_model_dir="/data6/sobhan/RLLM_OPT/deepclip_models"
-results_dir="/data6/sobhan/RLLM/results/validation/test"
-
+results_dir="/data6/sobhan/RLLM/results/validation/test374800-filtered"
 # Define an array of proteins (adjust names to match your convention)
 proteins=("RBM5" "FUS" "ZC3H7B" "HNRNPA1" "MOV10" "AGO2" "TARDBP" "ELAVL1" "U2AF2" "hnRPNC" "SRSF1")
 
@@ -18,19 +17,19 @@ for protein in "${proteins[@]}"; do
     validation_num="PDB${protein}"
     
     # Create a directory to store the results for this protein
-    # mkdir -p "${results_dir}/${validation_num}"
+    mkdir -p "${results_dir}/${validation_num}"
     
     echo "Processing protein: ${protein}"
     echo "Results will be saved in: ${results_dir}/${validation_num}"
     
     # 1. Create RNA pool using the RLLM environment
-    # conda activate /data6/sobhan/envs/rllm2
-    # CUDA_VISIBLE_DEVICES=2 python generate.py \
-    #     --runmode create_pool \
-    #     --max_len ${max_len} \
-    #     --rna_num ${pool_size} \
-    #     --proteins ${protein} \
-    #     --eval-dir "${results_dir}/${validation_num}"
+    conda activate /data6/sobhan/envs/rllm2
+    CUDA_VISIBLE_DEVICES=2 python generate.py \
+        --runmode create_pool \
+        --max_len ${max_len} \
+        --rna_num ${pool_size} \
+        --proteins ${protein} \
+        --eval-dir "${results_dir}/${validation_num}"
     
     # 2. Filter using DeepCLIP's environment
     conda activate /data1/sobhan/deepclip/deep-env
