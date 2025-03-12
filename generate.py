@@ -1,6 +1,6 @@
 import argparse
 import os
-
+from itertools import cycle, islice
 from src.utils.helpers import * 
 
 clip_directory = "/data6/sobhan/RLLM_OPT/deepclip_models" 
@@ -112,37 +112,36 @@ def fasta_to_fasta(input_path, output_path, max_rnas, min_len=10, max_len=37):
     return rnas
 
 
-
 def create_pool(args, model, source_tokenizer, rna_tokenizer):
     grid_config = {
-        'beam_search': [
-            {'num_beams': 1},
-            {'num_beams': 25},
-            {'num_beams': 50},
-            {'num_beams': 100},
-            {'num_beams': 200},
-        ],
+        # 'beam_search': [
+        #     {'num_beams': 1},
+        #     {'num_beams': 25},
+        #     {'num_beams': 50},
+        #     {'num_beams': 100},
+        #     {'num_beams': 200},
+        # ],
         'top_k': [
             # {'top_k': 30, 'temperature': 0.7, 'num_beams': 1},
-            {'top_k': 30, 'temperature': 1.0, 'num_beams': 1},
-            {'top_k': 30, 'temperature': 1.5, 'num_beams': 1},
-            {'top_k': 100, 'temperature': 0.7, 'num_beams': 1},
-            {'top_k': 100, 'temperature': 1.0, 'num_beams': 1},
+            {'top_k': 10, 'temperature': 1.0, 'num_beams': 1},
+            {'top_k': 10, 'temperature': 1.5, 'num_beams': 1},
+            # {'top_k': 100, 'temperature': 0.7, 'num_beams': 1},
+            # {'top_k': 100, 'temperature': 1.0, 'num_beams': 1},
             # {'top_k': 100, 'temperature': 1.5, 'num_beams': 1},
         ],
-        'top_p': [
+        # 'top_p': [
             # {'top_p': 0.8, 'temperature': 0.7, 'num_beams': 1},
-            {'top_p': 0.8, 'temperature': 1.0, 'num_beams': 1},
-            {'top_p': 0.8, 'temperature': 1.5, 'num_beams': 1},
-            {'top_p': 0.95, 'temperature': 0.7, 'num_beams': 1},
-            {'top_p': 0.95, 'temperature': 1.0, 'num_beams': 1},
+            # {'top_p': 0.8, 'temperature': 1.0, 'num_beams': 1},
+            # {'top_p': 0.8, 'temperature': 1.5, 'num_beams': 1},
+            # {'top_p': 0.95, 'temperature': 0.7, 'num_beams': 1},
+            # {'top_p': 0.95, 'temperature': 1.0, 'num_beams': 1},
             # {'top_p': 0.95, 'temperature': 1.5, 'num_beams': 1},
-        ],
-        'sample': [
-            {'temperature': 0.7, 'num_beams': 1},
-            {'temperature': 1.0, 'num_beams': 1},
-            {'temperature': 1.5, 'num_beams': 1},
-        ]
+        # ],
+        # 'sample': [
+            # {'temperature': 0.7, 'num_beams': 1},
+            # {'temperature': 1.0, 'num_beams': 1},
+            # {'temperature': 1.5, 'num_beams': 1},
+        # ]
     }
     
     os.makedirs(args.eval_dir, exist_ok=True)
@@ -196,11 +195,11 @@ def create_pool(args, model, source_tokenizer, rna_tokenizer):
 
 def aggregate(args):
     rna_files = {
-        "Natural_non-binding": "/data6/sobhan/dataset/DeepCLIP/dataset/RBM5/RBM5_negatives.txt",
-        "Natural_Binding": f"/data6/helya/dataset/CLIPdb_cluster/cd_hit_results_RBPs/identity_100/{args.proteins[0].upper()}_rnas_cdhit_100.fa",
+        "Natural_non-binding": f"/data6/sobhan/RLLM/dataset/deepclip/{args.proteins[0].upper()}/data/test_negatives.fasta",
+        "Natural_Binding": f"/data6/sobhan/RLLM/dataset/deepclip/{args.proteins[0].upper()}/data/test_positives.fasta",
         # "RNAGEN_ ": "/data6/sobhan/RNAGEN/output/RBM5_inv_distance_softmax_method_maxiters_3000_v1/RBM5_best_binding_sequences.txt",
-        # "GenerRNA_ ": "/data6/sobhan/GenerRNA/rbm5_pool.fasta",
-        "RNAtranslator_ ": f"{args.eval_dir}/{args.proteins[0]}_filtered.fasta"
+        # "GenerRNA_ ": "/data6/sobhan/GenerRNA/novel_rnas_GenerRNA.fasta",
+        "RNAtranslator_ ": f"{args.eval_dir}/{args.proteins[0]}_pool.fasta"
     }
 
     filtered_paths = {
@@ -210,17 +209,23 @@ def aggregate(args):
         key: fasta_to_fasta(path, filtered_paths[key], args.rna_num, min_len=10, max_len=args.max_len+5)
         for key, path in rna_files.items()
     }
-    # print(filtered_rnas)
+
+    # Determine the minimum count of RNAs among all groups
+    min_count = min(len(rnas) for rnas in filtered_rnas.values())
+    print(f"Minimum RNA count among all groups: {min_count}")
+
+    # For each group, keep only the first min_count RNAs
+    for key in filtered_rnas:
+        filtered_rnas[key] = filtered_rnas[key][:min_count]
 
     combined_path = os.path.join(args.eval_dir, "rnas.fasta")
     with open(combined_path, "w") as outfile:
         for key, rnas in filtered_rnas.items():
             for idx, rna in enumerate(rnas):
                 outfile.write(f">{key}_RNA_{idx}\n{rna}\n")
-        # for idx, rna in enumerate(gen_rnas):
-        #     outfile.write(f">Generated_RNA_{idx}\n{rna}\n")
 
-    print(f"All RNAs combined and saved at {combined_path}") 
+    print(f"All RNAs combined and saved at {combined_path}")
+
 
 
 def calc_deep_clip(rna_sequences, protein_name) -> int:
@@ -315,7 +320,7 @@ def parse_opt():
     parser.add_argument('--model-hyp', default="/data6/sobhan/RLLM/hyps/t5.yaml", type=str, help='Model hyperparameters')
 
     # Generation Configurations
-    parser.add_argument('--checkpoints', default='/data6/sobhan/RLLM/finetune/checkpoint-374800', type=str, help='Load Model')
+    parser.add_argument('--checkpoints', default='/data6/sobhan/RLLM/finetune/checkpoint-385600', type=str, help='Load Model')
     parser.add_argument('--eval-dir', default="/data6/sobhan/RLLM/results/validation/pool", type=str, help='Output dir of the evaluation')
     parser.add_argument('--proteins', nargs='+', default=['hnrpnc', 'ago2', 'elavl1', 'rbm5'], type=str, help='List of protein names or IDs')
     parser.add_argument('--rna_num', default=128, type=int, help='Number of RNAs to aggregate for evaluation')
