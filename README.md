@@ -1,15 +1,22 @@
-# RNAtranslator
+<h1 align="left" style="color:#00aa55">🌿 RNAtranslator</h1>
+<h3 align="left">Modeling protein-conditional RNA design as sequence-to-sequence natural language translation</h3>
 
 ---
 
+## 🌱 Overview
 
-## Overview
+**RNAtranslator** is a generative language model that redefines RNA design as a **sequence-to-sequence translation problem**, treating proteins and RNAs as "languages." By learning from **millions of protein-RNA interactions**, RNAtranslator directly generates **novel RNA sequences** with:
 
-**RNAtranslator** is a novel generative language model that reformulates protein-conditional RNA design as a sequence-to-sequence natural language translation problem. By learning a joint representation of RNA and protein interactions from large-scale datasets, RNAtranslator directly generates RNA sequences with high binding affinity, natural-like properties, and novel all without the need for post-generation optimization. This breakthrough approach paves the way for efficient RNA design applicable to a broad range of proteins, opening new avenues in RNA therapeutics and synthetic biology.
+- High binding affinity  
+- Structural and functional similarity to natural RNAs  
+- No need for post-generation optimization  
+
+This innovation opens new frontiers in **RNA therapeutics**, especially for **undruggable proteins**, and unlocks powerful tools for **synthetic biology**.
 
 <div align="center">
   <img src="./examples/Model6.png" alt="RNAtranslator Architecture" width="100%">
 </div>
+
 
 ---
 
