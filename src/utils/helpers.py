@@ -5,9 +5,6 @@ import random
 import numpy as np
 import json
 import pandas as pd
-import re
-import lib_forgi
-from lib_forgi import BulgeGraph
 import tempfile
 import subprocess
 import RNA
@@ -234,101 +231,22 @@ def read_deepclip_output(json_path):
     
     return scores
 
-
-# def run_rosetta_rna(name, fasta_file, output_dir):
-#     npz_file = f"{name}.npz"
-#     command = [
-#         "python predict.py",  # or the specific executable name
-#         "-i", fasta_file,
-#         "--output", npz_file
-#     ]
-#     subprocess.run(command, check=True)
-
-#         command = [
-#         "python fold.py",  # or the specific executable name
-#         "-OUT", f'{output_dir}',
-#         "-npz", npz_file,
-#         "-fasta", fasta_file
-#     ]
-#     subprocess.run(command, check=True)
-
-#     print("Structure Predicdocker --versiontion Done for ", name)
-
-
-# def run_hdocklite(rna, protein, output_dir):
-#     subprocess.run(["/data6/sobhan/docking/HDOCK/hdock", f"{protein}", f"{rna}", "-out", f"{output_dir}/Hdock.out"], check=True)
-#     subprocess.run(["/data6/sobhan/docking/HDOCK/createpl", f"{output_dir}/Hdock.out", "top100.pdb", "-nmax", "100", "-complex", "-models"], check=True)
-#     print("Hdock Done for ", rna, protein)
-
-
-###################### RNA Secondary Structure Annotations ######################
-
-ENTITY_LOOKUP = {
-    'b': 0,  # Bulge
-    'f': 1,  # Dangling start
-    't': 2,  # Dangling end
-    'i': 3,  # Internal loop
-    'h': 4,  # Hairpin loop
-    'm': 5,  # Multi-loop
-    's': 6   # Stem
-}
-LABELS = ['B', 'F', 'T', 'I', 'H', 'M', 'S']
-
-def detect_bulges(dot_bracket):
-    """Detect bulge positions in a dot-bracket sequence."""
-    bulge_positions = set()
-    stack = []
-    
-    for i, char in enumerate(dot_bracket):
-        if char == '(':
-            stack.append(i)
-        elif char == ')':
-            if stack:
-                stack.pop()
-        elif char == '.' and 0 < i < len(dot_bracket) - 1:
-            if dot_bracket[i - 1] == '(' and dot_bracket[i + 1] == ')':
-                bulge_positions.add(i)
-    
-    return bulge_positions
-
-def parse_dot_bracket_to_labels(dot_bracket: str):
-    bg = BulgeGraph()
-    bg.from_dotbracket(dot_bracket, None)
-    
-    num_positions = len(dot_bracket)
-    structure_matrix = np.zeros((7, num_positions), dtype=int)
-
-    for line in bg.to_bg_string().split('\n'):
-        line = line.strip()
-        if line.startswith('define'):
-            parts = line.split()
-            entity = parts[1][0]
-            entity_index = ENTITY_LOOKUP.get(entity)
-            if entity_index is not None and len(parts) > 2:
-                start_idx, end_idx = int(parts[2]) - 1, int(parts[3]) - 1
-                structure_matrix[entity_index, start_idx:end_idx + 1] = 1
-
-    for i in detect_bulges(dot_bracket):
-        structure_matrix[ENTITY_LOOKUP['b'], i] = 1
-    
-    labels = []
-    for pos in range(num_positions):
-        if structure_matrix[ENTITY_LOOKUP['b'], pos] == 1:
-            labels.append('B')
-        else:
-            row_indices = np.where(structure_matrix[:, pos] == 1)[0]
-            labels.append(LABELS[row_indices[0]] if row_indices.size > 0 else ' ')
-    
-    return labels
-
-
-def get_structure_annotations(sequence, method="rnafold"):
-    if method == "rnafold":
-        dot_bracket, mfe = RNA.fold(sequence)
-    elif method == "mxfold2":
-        mx_fold=MXFold2API()
-        dot_bracket = mx_fold.predict("sdada", sequence)
-    else:
-        raise ValueError(f"Invalid method: {method}")
-
-    return parse_dot_bracket_to_labels(dot_bracket) if dot_bracket else [" "] * len(rna_sequence)
+def read_protein_from_fasta(fasta_path):
+    """
+    Reads the first protein sequence from a FASTA file.
+    Returns (header, sequence)
+    """
+    header = None
+    sequence = ""
+    with open(fasta_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith(">"):
+                if header:  # Already found a protein
+                    break
+                header = line[1:]  # skip '>'
+            else:
+                sequence += line.strip().replace("T", "U").upper()
+    if not header or not sequence:
+        raise ValueError(f"No protein found in {fasta_path}")
+    return header, sequence

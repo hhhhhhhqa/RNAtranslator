@@ -131,55 +131,6 @@ def compare_token_distribution(natural_sequences, generated_sequences, tokenizer
         'generated_distribution': generated_distribution
     }
 
-# def compare_mfe_distribution(rna_sequences_list, labels, dir) -> None:
-#     distributions = []
-
-#     # Calculate MFE for each RNA sequence list
-#     for rna_seqs in rna_sequences_list:
-#         distribution = calculate_mfe_many(rna_seqs)
-#         distributions.append(distribution)
-
-#     # Mann-Whitney U Test for each pair
-#     results = {}
-#     for i in range(len(distributions)):
-#         for j in range(i + 1, len(distributions)):
-#             u_stat, p_value = mannwhitneyu(distributions[i], distributions[j], alternative='two-sided')
-#             results[f"List{i+1} vs List{j+1}"] = (u_stat, p_value)
-#     for comparison, (u_stat, p_value) in results.items():
-#         print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
-
-#     # Generate plots using dynamic functions
-#     plot_violin_compare(distributions, labels, "MFE", f"{dir}/mfe_violin.png")
-#     plot_box_compare(distributions, labels, "MFE", f"{dir}/mfe_box.png")
-#     plot_density_compare(distributions, labels, "MFE", f'{dir}/density_plot_mfe_output.png', False)
-
-#     return None
-
-# Generalized GC Content Comparison
-# def compare_gc_content(rna_sequences_list, labels, dir) -> None:
-#     gc_distributions = []
-
-#     # Calculate GC content for each RNA sequence list
-#     for rna_seqs in rna_sequences_list:
-#         gc_content = [calculate_gc_content(seq) for seq in rna_seqs]
-#         gc_distributions.append(gc_content)
-
-#     # Mann-Whitney U Test for each pair
-#     results = {}
-#     for i in range(len(gc_distributions)):
-#         for j in range(i + 1, len(gc_distributions)):
-#             u_stat, p_value = mannwhitneyu(gc_distributions[i], gc_distributions[j], alternative='two-sided')
-#             results[f"List{i+1} vs List{j+1}"] = (u_stat, p_value)
-#     for comparison, (u_stat, p_value) in results.items():
-#         print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
-        
-#     # Generate plots using dynamic functions
-#     plot_violin_compare(gc_distributions, labels, "GC Content", f"{dir}/gc_content_violin.png")
-#     plot_box_compare(gc_distributions, labels, "GC Content", f"{dir}/gc_box.png")
-#     plot_density_compare(gc_distributions, labels, "GC Content", f'{dir}/density_plot_gc_output.png', False)
-
-#     return None
-
 def compare_mfe_distribution(rna_sequences_dict, dir) -> None:
     distributions = []
     labels = list(rna_sequences_dict.keys())
@@ -284,55 +235,6 @@ def compare_rna_similarity(rna_sequences_dict, k, dir) -> None:
 
     return None
     
-"""def compare_structure_distribution(rna_sequences_dict, dir, path_to_rnafold="RNAfold") -> None:
-    structure_distributions = {label: {key: 0 for key in ['F', 'T', 'I', 'H', 'M', 'S']} for label in rna_sequences_dict.keys()}
-    labels = list(rna_sequences_dict.keys())
-
-    for group_name, rna_seqs in rna_sequences_dict.items():
-        for seq in rna_seqs:
-            struct_annotation = get_struct_annotation_viennaRNA(seq, path_to_rnafold)
-            total_length = len(seq)
-            for struct in struct_annotation:
-                if struct in structure_distributions[group_name]:
-                    structure_distributions[group_name][struct] += 1
-        for struct_type in structure_distributions[group_name]:
-            structure_distributions[group_name][struct_type] /= total_length
-
-    # Mann-Whitney U Test for each structure type between groups
-    results = {}
-    structure_types = ['F', 'T', 'I', 'H', 'M', 'S']
-    
-    for struct_type in structure_types:
-        values = [structure_distributions[label][struct_type] for label in labels]
-        for i in range(len(labels)):
-            for j in range(i + 1, len(labels)):
-                u_stat, p_value = mannwhitneyu(
-                    values[i],
-                    values[j],
-                    alternative='two-sided'
-                )
-                results[f"{labels[i]} vs {labels[j]} ({struct_type})"] = (u_stat, p_value)
-
-    for comparison, (u_stat, p_value) in results.items():
-        print(f"{comparison}: U statistic = {u_stat}, p-value = {p_value}")
-
-    os.makedirs(f"{dir}/structure", exist_ok=True)
-
-    fig, axes = plt.subplots(2, 3)
-    axes = axes.flatten()
-    
-    for idx, struct_type in enumerate(structure_types):
-        proportions = [structure_distributions[label][struct_type] for label in labels]
-        axes[idx].bar(labels, proportions)
-        axes[idx].set_title(f"{struct_type} Structure Proportion")
-        axes[idx].set_xlabel("Groups")
-        axes[idx].set_ylabel("Proportion")
-    
-    plt.tight_layout()
-    plt.savefig(f"{dir}/structure/secondary_structure_bar.png")
-    plt.show()
-
-    return None"""
 
 def compare_rna_length(rna_sequences_dict, dir) -> None:
     length_distributions = []
@@ -361,20 +263,7 @@ def compare_rna_length(rna_sequences_dict, dir) -> None:
     return None
 
 def compare_radars(data_dict, filename):
-    """
-    Compares RNA secondary structure distributions using a radar chart.
 
-    Parameters:
-    - data_dict: A dictionary where keys are RNA structure categories (e.g., "Stem", "Hairpin")
-                 and values are lists of proportions for different RNA groups.
-                 Example:
-                 {
-                     "Stem": [0.3, 0.4, 0.5, 0.2],
-                     "Hairpin": [0.2, 0.3, 0.4, 0.1],
-                     "Bulge": [0.1, 0.2, 0.3, 0.05]
-                 }
-    - filename: Path to save the radar chart.
-    """
     categories = list(data_dict.keys())
     data = np.array(list(data_dict.values())).T  # Transpose to match the format for radar chart
     group_labels = ["Generated", "Random", "Natural", "Binding"]
@@ -382,14 +271,6 @@ def compare_radars(data_dict, filename):
     plot_radar_chart(data, categories, group_labels, filename)
 
 def compare_structure_distribution_Radar(rna_sequences_dict, dir, path_to_rnafold="RNAfold") -> None:
-    """
-    Compares RNA secondary structure distributions across different RNA groups using a radar chart.
-
-    Parameters:
-    - rna_sequences_dict: Dictionary with group names as keys and lists of RNA sequences as values.
-    - dir: Directory to save the radar chart.
-    - path_to_rnafold: Path to the RNAfold executable.
-    """
     structure_distributions = {label: {key: 0 for key in ['F', 'T', 'I', 'H', 'M', 'S']} for label in rna_sequences_dict.keys()}
     labels = list(rna_sequences_dict.keys())
 

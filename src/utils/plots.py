@@ -4,15 +4,15 @@ import matplotlib
 import seaborn as sns
 import pandas as pd
 
-params = {'legend.fontsize': 20,
+params = {'legend.fontsize': 30,
         'figure.figsize': (14, 8),
-        'axes.labelsize': 20,
-        'axes.titlesize':20,
-        'xtick.labelsize':20,
+        'axes.labelsize': 25,
+        'axes.titlesize':30,
+        'xtick.labelsize':25,
         'ytick.labelsize':20,
-        'lines.linewidth': 3}
+        'lines.linewidth': 1}
 
-color_palette = ["#E74C3C", "#3498DB", "#1ABC9C", "#E67E22", "#F1C40F", "#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"]
+color_palette = ["#3498DB","#F1C40F","#E74C3C",     "#E67E22","#1ABC9C", "#65879F", "#8B8C89", "#425062", "#8F5C5C", "#CFACAC"]
 
 plt.rcParams.update(params)
 
@@ -223,28 +223,30 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.ticker as ticker
 
-# Violin Plot
 def plot_violin_compare(data_arrays, labels, ylabel, filename, limit=True):
-    # Create the violin plot
-    plt.figure()
+    fig, ax = plt.subplots()
+    
     sns.violinplot(
+        ax=ax,
         data=data_arrays,
-        inner='box', 
+        inner='box',
         palette=color_palette,
-        width=0.6,  
-        linewidth=1.5,  
-        fliersize=4,  
-        whis=1.5  
+        width=0.6,
+        linewidth=1.5,
+        fliersize=4,
+        whis=1.5
     )
-    # Customize the plot
-    plt.xticks(range(len(data_arrays)), labels)
-    plt.ylabel(ylabel)
-    # if limit:
-    #     plt.ylim(0, 1)
+    
+    ax.set_xticks(range(len(data_arrays)))
+    ax.set_xticklabels(labels, rotation=30)
+    ax.set_ylabel(ylabel)
 
-    plt.tight_layout()
-    plt.savefig(filename)
-    plt.close()
+    
+    # Adjust layout and save the figure
+    fig.tight_layout()
+    fig.savefig(filename, dpi=600, bbox_inches="tight")
+    plt.close(fig)
+
 
 # Ridge Plot
 def plot_ridge_compare(data_arrays, labels, xlabel, filename):
@@ -294,23 +296,52 @@ def plot_density_compare(data_arrays, labels, xlabel, filename, limit=True):
     plt.savefig(filename)
     plt.close()
 
-# Box Plot
 def plot_box_compare(data_arrays, labels, ylabel, filename):
-    plt.figure()
+    """
+    Plots a box plot comparison using an object-oriented approach,
+    and adds a legend with the provided labels.
+    
+    Instead of setting alpha on the patches, we adjust the palette colors to include transparency.
+    """
+    import matplotlib.colors as mcolors
+    import matplotlib.patches as mpatches
+
+    # Create an adjusted palette by converting each color to an RGBA tuple with the desired alpha (0.1)
+    adjusted_palette = [mcolors.to_rgba(c, alpha=0.1) for c in color_palette]
+    
+    # Create a new figure and axis using subplots
+    fig, ax = plt.subplots()
+    
+    # Plot the boxplot on the given axis using the adjusted palette
     sns.boxplot(
+        ax=ax,
         data=data_arrays,
-        palette=color_palette,  # Dynamic color palette based on input size
-        width=0.6,  
-        linewidth=1.5,  
-        fliersize=4,  
-        whis=1.5  
+        palette=adjusted_palette,  # Use the palette with alpha applied
+        width=0.4,
+        linewidth=1,
+        fliersize=3,
+        whis=1
     )
-    plt.xticks(range(len(data_arrays)), labels)
-    plt.ylabel(ylabel)
-    plt.grid(True, axis='y', linestyle='--', linewidth=0.6, alpha=0.7)
     
-    plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=False))
+    # Set x-tick labels and the y-axis label
+    ax.set_xticks(range(len(data_arrays)))
+    ax.set_xticklabels(labels, rotation=15)
+    ax.set_ylabel(ylabel)
     
-    plt.tight_layout()
-    plt.savefig(filename)
-    plt.close()
+    # Add grid lines on the y-axis
+    ax.grid(True, axis='y', linestyle='--', linewidth=0.6, alpha=0.7)
+    
+    # Adjust the y-axis locator to allow non-integer ticks
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=False))
+    
+    # Create legend handles from the original (opaque) palette colors for clarity in the legend
+    # legend_handles = [
+    #     mpatches.Patch(color=c, label=label)
+    #     for c, label in zip(color_palette, labels)
+    # ]
+    # ax.legend(handles=legend_handles, loc="upper left")
+    
+    # Adjust layout and save the figure
+    fig.tight_layout()
+    fig.savefig(filename, dpi=600, bbox_inches="tight")
+    plt.close(fig)

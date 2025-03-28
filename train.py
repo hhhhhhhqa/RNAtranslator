@@ -8,42 +8,6 @@ from transformers.trainer_callback import TrainerControl, TrainerState
 from accelerate import Accelerator
 
 
-# class EvalCallback(TrainerCallback):
-#     def __init__(self, args, eval_dataset, model, enc_tokenizer, dec_tokenizer, wandb):
-#         super().__init__()
-#         self.args = args
-#         self.dec_tokenizer = dec_tokenizer
-#         self.enc_tokenizer = enc_tokenizer
-#         self.wandb = wandb
-#         self.eval_dataset = eval_dataset
-#         self.model = model
-
-#     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-#         super().on_train_begin(args, state, control, **kwargs)
-#             # Check device for each module in the model
-#         for name, module in self.model.named_modules():
-#             if hasattr(module, 'weight') and module.weight is not None:
-#                 print(f"Module: {name}, Weight Device: {module.weight.device}")
-#             if hasattr(module, 'bias') and module.bias is not None:
-#                 print(f"Module: {name}, Bias Device: {module.bias.device}")
-#         # self.eval(state.global_step)
-#         return
-
-#     def on_train_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-#         super().on_train_end(args, state, control, **kwargs)
-#         self.eval(state.global_step)
-#         return
-
-#     def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-#         super().on_evaluate(args, state, control, **kwargs)
-#         self.eval(state.global_step)
-#         return
-
-#     def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-#         super().on_evaluate(args, state, control, **kwargs)
-#         self.eval(state.global_step)
-#         return
-
 def train(args:object, wandb, model, train_dataset, eval_dataset)->None:
     training_args = TrainingArguments(
         
@@ -52,11 +16,8 @@ def train(args:object, wandb, model, train_dataset, eval_dataset)->None:
         do_train=args.do_train,
         do_eval=args.do_eval,
         do_predict=args.do_predict,
-  
         #resume_from_checkpoint="/data6/sobhan/rllm/results/train/t5/run3_20240822-152114/checkpoints/checkpoint-141200", # Resume Training
         ignore_data_skip = False, # Resume Training
-  
-        # evaluation_strategy=args.evaluation_strategy,
         prediction_loss_only=args.prediction_loss_only,
         per_device_train_batch_size=args.per_device_train_batch_size,
         per_device_eval_batch_size=args.per_device_eval_batch_size,
@@ -71,7 +32,6 @@ def train(args:object, wandb, model, train_dataset, eval_dataset)->None:
         num_train_epochs=args.num_train_epochs,
         max_steps=args.max_steps,
         lr_scheduler_type=args.lr_scheduler_type,
-        # lr_scheduler_kwargs=args.lr_scheduler_kwargs,
         warmup_ratio=args.warmup_ratio,
         warmup_steps=args.warmup_steps,
         log_level=args.log_level,
@@ -85,9 +45,7 @@ def train(args:object, wandb, model, train_dataset, eval_dataset)->None:
         save_strategy=args.save_strategy,
         save_steps=args.save_steps,
         save_total_limit=args.save_total_limit,
-        # save_safetensors=args.save_safetensors,
         save_on_each_node=args.save_on_each_node,
-        # save_only_model=args.save_only_model,
         use_cpu=args.use_cpu,
         seed=args.seed,
         data_seed=args.data_seed,
@@ -120,14 +78,10 @@ def train(args:object, wandb, model, train_dataset, eval_dataset)->None:
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=train_dataset,
-        # eval_dataset=eval_dataset,
-        # callbacks=[evalCallback],
+        train_dataset=train_dataset
     )
 
     trainer.train()
-
-    # Resume Training
-    # trainer.train(resume_from_checkpoint=True)
+    # trainer.train(resume_from_checkpoint=True) # Resume Training
     return model
 
