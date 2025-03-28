@@ -3,7 +3,7 @@
 
 ---
 
-## 🌱 Overview
+## Overview
 
 **RNAtranslator** is a generative language model that redefines RNA design as a **sequence-to-sequence translation problem**, treating proteins and RNAs as "languages." By learning from **millions of protein-RNA interactions**, RNAtranslator directly generates **novel RNA sequences** with:
 
@@ -11,7 +11,8 @@
 - Structural and functional similarity to natural RNAs  
 - No need for post-generation optimization  
 
-This innovation opens new frontiers in **RNA therapeutics**, especially for **undruggable proteins**, and unlocks powerful tools for **synthetic biology**.
+This innovation opens new frontiers in **RNA therapeutics**, especially for **undruggable proteins**, and unlocks powerful tools for **synthetic biology**. The RNAtranslator model uses an encoder–decoder transformer architecture. During training, the encoder is provided with the target protein sequence while the decoder learns to regenerate the binding RNA sequence. At inference, the model takes a protein sequence as input and generates candidate RNA sequences by sampling from the learned distribution.
+
 
 <div align="center">
   <img src="./examples/Model6.png" alt="RNAtranslator Architecture" width="100%">
@@ -27,13 +28,6 @@ This innovation opens new frontiers in **RNA therapeutics**, especially for **un
 - **Large-Scale Training:** Initially trained on 26 million RNA–protein interactions (RNAInter dataset) and fine-tuned on 12 million experimentally validated interactions.
 - **Direct RNA Generation:** Generates RNA sequences conditioned on a target protein sequence without additional optimization.
 - **Multi-GPU Support:** Training is accelerated using [Hugging Face Accelerate](https://huggingface.co/docs/accelerate).
-
----
-
-## Architecture
-
-The RNAtranslator model uses an encoder–decoder transformer architecture. During training, the encoder is provided with the target protein sequence while the decoder learns to regenerate the binding RNA sequence. At inference, the model takes a protein sequence as input and generates candidate RNA sequences by sampling from the learned distribution.
-
 
 ---
 
@@ -85,12 +79,6 @@ rnatranslator/
 └── examples/               # Example inputs and outputs.
     ├── protein.fasta        # Example protein FASTA file.
 ```
-
-
-## Installation
-
-RNAtranslator is implemented in Python using PyTorch and Hugging Face Accelerate for distributed training. Please refer to the provided environment configuration file to set up the required dependencies. It is recommended to create a dedicated virtual environment to ensure reproducibility.
-
 ---
 
 ## Usage Manual
