@@ -1,6 +1,8 @@
 <h1 align="left" style="color:#00aa55">🌿 RNAtranslator</h1>
 <h3 align="left">Modeling protein-conditional RNA design as sequence-to-sequence natural language translation</h3>
 
+[![bioRxiv](https://img.shields.io/badge/bioRxiv-preprint-orange)](https://www.biorxiv.org/content/10.1101/2025.03.04.641375v1)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-model-yellow)](https://huggingface.co/SobhanShukueian/rnatranslator)
 ---
 
 ## Overview
