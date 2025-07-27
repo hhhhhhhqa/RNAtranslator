@@ -1,15 +1,13 @@
 ################################Tokenizer
 tokenizer: "bpe"
-source_tokenizer: "/data6/sobhan/RLLM/dataset/tokenizers/bpe_protein_1000_1024.json"
-rna_tokenizer: "/data6/sobhan/RLLM/dataset/tokenizers/bpe_rna_1000_1024.json"
+source_tokenizer: "/workspace/huangxiaoniu/RNAtranslator/model/protein_tokenizer/protein_tokenizer.json"
+rna_tokenizer: "/workspace/huangxiaoniu/RNAtranslator/model/protein_tokenizer/protein_tokenizer.json"
 vocab_size: 1000
 seq_size: 1024
 train_tokenizer: False
 
 ################################Data Configurations
-train_data: "/data6/sobhan/RLLM/dataset/rph/train_rp.txt"
-eval_data: "/data6/sobhan/RLLM/dataset/rph/eval_rp.txt"
-results_dir: "/data6/sobhan/RLLM/results"
+
 validation_sample_number: 5
 
 
